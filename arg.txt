@@ -1,0 +1,1 @@
+-gui Buyer1:pac.BuyerAgent("Book1",30,100);Buyer2:pac.BuyerAgent("Book2",15,100);Buyer3:pac.BuyerAgent("Book2",16,100);Saler1:pac.SalerAgent("Book1",30,20,30);Saler2:pac.SalerAgent("Book2",30,25,30);Saler3:pac.SalerAgent("Book1",30,20,30)
