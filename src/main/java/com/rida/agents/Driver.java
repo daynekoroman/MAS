@@ -66,7 +66,8 @@ public class Driver extends Agent {
     }
 
     private void setupGraph() {
-        File f = new File("input.txt");
+        ClassLoader classLoader = getClass().getClassLoader();
+        File f = new File(classLoader.getResource("graph.txt").getFile());
         BufferedReader fin;
         try {
             fin = new BufferedReader(new FileReader(f));
