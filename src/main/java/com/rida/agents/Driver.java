@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 
 public class Driver extends Agent {
@@ -27,28 +28,24 @@ public class Driver extends Agent {
 
     private static final long serialVersionUID = -2126376222227043630L;
 
-    int n;
-    int[][] graph;
-    int from, to;
-    String name;
+    private int n;
+    private int[][] graph;
+    private int from, to;
     private HashSet<DriverDescription> drivers;
-    int amountTicks = 0;
-    final static int TICK_LIMIT = 2;
-    boolean profitCalculated = false;
-    boolean proposeSended = false, proposeRecieved = false;
-    private int repliesCount = 0; // The counter of replies from Saler agents
-    private MessageTemplate mt; // The template to receive repli
+    private int amountTicks = 0;
+    private final static int TICK_LIMIT = 2;
+    private boolean profitCalculated = false;
+    private boolean proposeSended = false;
+    private MessageTemplate mt;
     private int sendCount = 0;
     private int rejectCount = 0;
     private int isDriver = 0;
-    private int summaryProfit = 0;
     private ArrayList<DriverDescription> potentialPassengers;
     private List<DriverDescription> passengers;
-    private ArrayList<Trip> trips;
 
     public int bfs(int x, int y) {
         // BFS uses Queue data structure
-        Queue<Integer> qx = new LinkedList<Integer>();
+        Queue<Integer> qx = new LinkedList<>();
         int[] res = new int[n];
         for (int i = 0; i < n; i++)
             res[i] = -1;
@@ -66,36 +63,36 @@ public class Driver extends Agent {
         return res[y];
     }
 
-    private void setupGraph() {
+    private void setupGraph() throws IOException {
         ClassLoader classLoader = getClass().getClassLoader();
-        File f = new File(classLoader.getResource("graph.txt").getFile());
+        URL fileUrl = classLoader.getResource("graph.txt");
+        File file;
+        if (fileUrl != null) {
+            file = new File(fileUrl.getFile());
+        } else {
+            file = null;
+        }
+
         BufferedReader fin;
-        try {
-            fin = new BufferedReader(new FileReader(f));
-            String[] size = fin.readLine().split(" ");
-            n = Integer.parseInt(size[0]);
-            graph = new int[n][n];
-            for (int i = 0; i < n; i++) {
-                String[] matr = fin.readLine().split(" ");
-                for (int j = 0; j < matr.length; j++) {
-                    graph[i][j] = Integer.parseInt(matr[j]);
+        if (file != null) {
+            try {
+                fin = new BufferedReader(new FileReader(file));
+                String[] size = fin.readLine().split(" ");
+                n = Integer.parseInt(size[0]);
+                graph = new int[n][n];
+                for (int i = 0; i < n; i++) {
+                    String[] matr = fin.readLine().split(" ");
+                    for (int j = 0; j < matr.length; j++) {
+                        graph[i][j] = Integer.parseInt(matr[j]);
+                    }
                 }
-            }
-            fin.close();
-        } catch (Exception e) {
-            doDelete();
-        }
-    }
-
-
-    private int getReverseProfitByDriver(String driverName) {
-        for (DriverDescription dd : drivers) {
-            if (driverName.equals(dd.name)) {
-                return dd.reverseProfit;
+                fin.close();
+            } catch (IOException e) {
+                doDelete();
+                e.printStackTrace();
             }
         }
 
-        throw new IllegalStateException("Driver not found");
     }
 
 
@@ -110,34 +107,16 @@ public class Driver extends Agent {
     }
 
 
-    private int getMaxProfitByDriver() {
-        int max = -1000000000;
-        for (DriverDescription dd : drivers) {
-            if (dd.profit > max) {
-                max = dd.profit;
-            }
-        }
-        return max;
-    }
-
-
     private void recalcProfit() {
         Collections.sort(potentialPassengers, Collections.reverseOrder());
-        passengers = potentialPassengers;/*potentialPassegengers.tream().sorted(Comparator.comparing(DriverDescription::getReverseProfit).reversed()).collect(Collectors.toList());*/
-//        for (int i = 0; i < Math.min(4, passengers.size()); i++)
-//            summaryProfit += getReverseProfitByDriver(passengers.get(i).name);
-//
-//        System.out.println("summaryProfit vs maxProfit: " + summaryProfit + " " + getMaxProfitByDriver());
-//        return (summaryProfit > getMaxProfitByDriver());
+        passengers = potentialPassengers;
     }
 
 
     private void calculateProfit() {
-
         for (DriverDescription descr : drivers) {
             descr.calcWayLength();
             descr.calcProfit(from, to);
-            //System.out.println(descr.name + " " + descr.profit + " " + descr.reverseProfit + " " + descr.value);
         }
     }
 
@@ -148,11 +127,15 @@ public class Driver extends Agent {
 
 
     public void setup() {
-        setupGraph();
+        try {
+            setupGraph();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Object[] args = getArguments();
         from = Integer.parseInt((String) args[0]);
         to = Integer.parseInt((String) args[1]);
-        drivers = new HashSet<DriverDescription>();
+        drivers = new HashSet<>();
 
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(getAID());
@@ -180,17 +163,13 @@ public class Driver extends Agent {
                         proposeSended = true;
                         return;
                     }
-                    if (proposeSended) {
-                        if (sendCount == 0) {
-                            isDriver = 1;
-                        } else {
-                            myAgent.addBehaviour(new ResponseReceiver());
-                        }
+                    if (sendCount == 0) {
+                        isDriver = 1;
+                    } else {
+                        myAgent.addBehaviour(new ResponseReceiver());
                     }
                     if (isDriver == 1) {
                         myAgent.addBehaviour(new DriverBehaviour());
-
-                        //proposeRecieved = true;
                     }
                     if (isDriver == -1) {
                         myAgent.addBehaviour(new PassengerBehaviour());
@@ -207,20 +186,19 @@ public class Driver extends Agent {
                 try {
                     DFAgentDescription[] result = DFService.search(myAgent, template);
 
-                    for (int i = 0; i < result.length; i++) {
+                    for (DFAgentDescription aResult : result) {
 
-                        boolean flag = myAgent.getName().equals(result[i].getName().toString().split(" ")[3]);
+                        boolean flag = myAgent.getName().equals(aResult.getName().toString().split(" ")[3]);
                         DriverDescription temp = new DriverDescription();
-                        temp.name = parseName(result[i]);
-                        temp.value = result[i].getName();
+                        temp.name = parseName(aResult);
+                        temp.value = aResult.getName();
                         if (!flag) {
-                            Iterator<ServiceDescription> iter = result[i].getAllServices();
+                            Iterator<ServiceDescription> iter = aResult.getAllServices();
                             while (true) {
                                 if (!iter.hasNext())
                                     break;
                                 ServiceDescription s = iter.next();
                                 temp.way = s.getName();
-                                // System.out.println(temp);
                             }
                             drivers.add(temp);
                         }
@@ -241,11 +219,6 @@ public class Driver extends Agent {
                     MessageTemplate.MatchConversationId("bring-up"));
             ACLMessage msg_accept = myAgent.receive(mt_accept);
             if (msg_accept != null) {
-//                if (trips == null) {
-//                    trips = new ArrayList<>();
-//                }
-//
-//                trips.add(new Trip(msg_accept.getSender(), Integer.parseInt(msg_accept.getContent())));
                 isDriver = -1;
                 LOG.info("{} I'm passenger now!", new Date());
             }
@@ -293,9 +266,8 @@ public class Driver extends Agent {
             MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CFP),
                     MessageTemplate.MatchConversationId("bring-up"));
             ACLMessage msg = myAgent.receive(mt);
-            potentialPassengers = new ArrayList<DriverDescription>();
+            potentialPassengers = new ArrayList<>();
             while (msg != null) {
-                //System.out.println(myAgent.getName() + " recieved : " + msg.getContent());
                 String driverName = msg.getContent().split("@")[0];
                 potentialPassengers.add(getDriverDescriptionByName(driverName));
                 msg = myAgent.receive(mt);
@@ -310,7 +282,6 @@ public class Driver extends Agent {
             }
             msg.setContent("0");
             msg.setConversationId("bring-up");
-            //msg.setReplyWith("cfp"+System.currentTimeMillis()); // Unique value
             myAgent.send(msg);
 
             msg = new ACLMessage(ACLMessage.REJECT_PROPOSAL);
@@ -319,24 +290,8 @@ public class Driver extends Agent {
             }
             msg.setContent("0");
             msg.setConversationId("bring-up");
-            //msg.setReplyWith("cfp"+System.currentTimeMillis()); // Unique value
             myAgent.send(msg);
             doDelete();
-//                    passengers = new ArrayList<>(potentialPassengers);
-//                    potentialPassengers = null;
-
-//                    System.out.println("passengers:");
-//                    passengers.stream().forEach((dd) -> {
-//                        System.out.println("\t" + dd.name + " " + dd.reverseProfit);
-//                    });
-//
-//
-//
-//                    System.out.println("after sort passengers:");
-//                    collect.stream().forEach((dd) -> {
-//                        System.out.println("\t" + dd.name + " " + dd.reverseProfit);
-//                    });
-
         }
     }
 
@@ -389,40 +344,24 @@ public class Driver extends Agent {
         }
     }
 
-
-//    private class DriverBehaviour extends Behaviour {
-//
-//        @Override
-//        public void action() {
-//
-//        }
-//
-//        @Override
-//        public boolean done() {
-//            return true;
-//        }
-//
-//    }
-
-
     private class DriverDescription implements Comparable {
-        public String way;
-        public String name;
-        public int wayLength;
-        public int profit;
-        public int reverseProfit;
-        public AID value;
+        String way;
+        String name;
+        int wayLength;
+        int profit;
+        int reverseProfit;
+        AID value;
 
 
         public String toString() {
             return (name.toString() + " " + way);
         }
 
-        public void calcWayLength() {
+        void calcWayLength() {
             wayLength = bfs(Integer.parseInt(way.split(" ")[0]), Integer.parseInt(way.split(" ")[1]));
         }
 
-        public void calcProfit(int from, int to) {
+        void calcProfit(int from, int to) {
             int myFrom = Integer.parseInt(way.split(" ")[0]);
             int myTo = Integer.parseInt(way.split(" ")[1]);
 
@@ -441,11 +380,8 @@ public class Driver extends Agent {
             }
 
             DriverDescription other = (DriverDescription) another;
-            if (this.name.equals(other.name) && this.way.equals(other.way)) {
-                return true;
-            }
+            return this.name.equals(other.name) && this.way.equals(other.way);
 
-            return false;
         }
 
         @Override
@@ -477,7 +413,7 @@ public class Driver extends Agent {
             cost = _cost;
         }
 
-        public AID driver;
+        AID driver;
         int cost;
     }
 }
