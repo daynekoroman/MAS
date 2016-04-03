@@ -28,6 +28,26 @@
 
     <profiles>
         <profile>
+            <id>jade-main</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.4.0</version>
+                        <configuration>
+                            <mainClass>jade.Boot</mainClass>
+                            <arguments>
+                                <argument>-conf</argument>
+                                <argument>src/main/resources/jade-main-container.properties</argument>
+                            </arguments>
+
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>jade-agent</id>
             <build>
                 <plugins>
@@ -56,6 +76,11 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+            <version>1.7.10</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
             <version>1.7.10</version>
         </dependency>
 

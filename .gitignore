@@ -10,3 +10,6 @@ buildNumber.properties
 .mvn/timing.properties
 
 # Created by .ignore support plugin (hsz.mobi)
+# JADE files
+APDescription.txt
+MTPs-Main-Container.txt

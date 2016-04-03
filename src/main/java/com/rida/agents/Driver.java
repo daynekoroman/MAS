@@ -14,14 +14,16 @@ import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.util.leap.Comparable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
 
-/**
- * @author daine
- */
 public class Driver extends Agent {
+
+    private static final Logger LOG = LoggerFactory.getLogger(Driver.class);
 
     private static final long serialVersionUID = -2126376222227043630L;
 
@@ -29,7 +31,6 @@ public class Driver extends Agent {
     int[][] graph;
     int from, to;
     String name;
-    //    private DriverDescription[] drivers;
     private HashSet<DriverDescription> drivers;
     int amountTicks = 0;
     final static int TICK_LIMIT = 2;
@@ -121,7 +122,8 @@ public class Driver extends Agent {
 
 
     private void recalcProfit() {
-        Collections.sort(potentialPassengers, Collections.reverseOrder());/*potentialPassegengers.stream().sorted(Comparator.comparing(DriverDescription::getReverseProfit).reversed()).collect(Collectors.toList());*/
+        Collections.sort(potentialPassengers, Collections.reverseOrder());
+        passengers = potentialPassengers;/*potentialPassegengers.tream().sorted(Comparator.comparing(DriverDescription::getReverseProfit).reversed()).collect(Collectors.toList());*/
 //        for (int i = 0; i < Math.min(4, passengers.size()); i++)
 //            summaryProfit += getReverseProfitByDriver(passengers.get(i).name);
 //
@@ -245,7 +247,7 @@ public class Driver extends Agent {
 //
 //                trips.add(new Trip(msg_accept.getSender(), Integer.parseInt(msg_accept.getContent())));
                 isDriver = -1;
-                System.out.println(myAgent.getName() + " passenger now!");
+                LOG.info("{} I'm passenger now!", new Date());
             }
 
             MessageTemplate mt_reject = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.REJECT_PROPOSAL),
@@ -255,7 +257,7 @@ public class Driver extends Agent {
                 rejectCount++;
                 if (rejectCount == sendCount) {
                     isDriver = 1;
-                    System.out.println(myAgent.getName() + " driver now!");
+                    LOG.info("{} I'm driver now!", new Date());
                     //myAgent.addBehaviour(new DriverBehaviour());
                 }
             }
@@ -300,7 +302,7 @@ public class Driver extends Agent {
             }
             recalcProfit();
 
-            System.out.println(myAgent.getName() + " is Driver now!");
+            LOG.info("{} I'm driver now!", new Date());
 
             msg = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
             for (int i = 0; i < Math.min(4, passengers.size()); i++) {
@@ -403,7 +405,7 @@ public class Driver extends Agent {
 //    }
 
 
-    private class DriverDescription {
+    private class DriverDescription implements Comparable {
         public String way;
         public String name;
         public int wayLength;
@@ -453,6 +455,17 @@ public class Driver extends Agent {
 
         public int getReverseProfit() {
             return reverseProfit;
+        }
+
+        @Override
+        public int compareTo(Object o) {
+            DriverDescription compDriverDescription = (DriverDescription) o;
+            if (reverseProfit == compDriverDescription.reverseProfit) return 0;
+            if (reverseProfit > compDriverDescription.reverseProfit) {
+                return 1;
+            } else {
+                return -1;
+            }
         }
     }
 
