@@ -7,7 +7,17 @@ import jade.core.AID;
  */
 public class DriverDescription implements Comparable {
     private String way;
+
+    public String getName() {
+        return name;
+    }
+
     private String name;
+
+    public AID getValue() {
+        return value;
+    }
+
     private AID value;
     private int from, to;
     private int wayLength;
@@ -34,17 +44,18 @@ public class DriverDescription implements Comparable {
         this.wayLength = dd.wayLength;
         this.profit = dd.profit;
         this.reverseProfit = dd.reverseProfit;
+        this.mapGraph = dd.mapGraph;
     }
 
     public String toString() {
         return (name.toString() + " " + way);
     }
 
-    void calcWayLength() {
+    public void calcWayLength() {
         wayLength = mapGraph.bfs(Integer.parseInt(way.split(" ")[0]), Integer.parseInt(way.split(" ")[1]));
     }
 
-    void calcProfit(int from, int to) {
+    public void calcProfit(int from, int to) {
         int myFrom = Integer.parseInt(way.split(" ")[0]);
         int myTo = Integer.parseInt(way.split(" ")[1]);
 
