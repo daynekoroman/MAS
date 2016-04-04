@@ -79,8 +79,9 @@ public class DriverAgent extends Agent {
         }
     }
 
-    public Set<DriverDescription> getPassenger(){
-        return passengers;
+    public Set<DriverDescription> getPassengers() {
+        return new HashSet<>(passengers);
+
     }
 
     /**
@@ -100,5 +101,14 @@ public class DriverAgent extends Agent {
     }
 
 
+    public int calcAmountPotentialPassengers() {
+        int count = 0;
+        for (DriverDescription descr : drivers) {
+            if (descr.getReverseProfit() > 0 && descr.getReverseProfit() <= descr.getProfit()) {
+                count++;
+            }
+        }
 
+        return count;
+    }
 }

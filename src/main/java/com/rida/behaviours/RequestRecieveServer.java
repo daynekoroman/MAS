@@ -16,6 +16,8 @@ import java.util.*;
  */
 public class RequestRecieveServer extends CyclicBehaviour {
     private DriverAgent driverAgent;
+    private int amountPotentialPassengers = -1;
+    private int countReceivedMsg = 0;
 
     private static final Logger LOG = LoggerFactory.getLogger(RequestRecieveServer.class);
 
@@ -111,28 +113,48 @@ public class RequestRecieveServer extends CyclicBehaviour {
         return max;
     }
 
+
     @Override
     public void action() {
         DriverAgent driverAgent = (DriverAgent) myAgent;
+
+        if (amountPotentialPassengers < 0) {
+            amountPotentialPassengers = driverAgent.calcAmountPotentialPassengers();
+        }
+
+        if (countReceivedMsg >= amountPotentialPassengers) {
+            return;
+        }
 
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CFP),
                 MessageTemplate.MatchConversationId("bring-up"));
         ACLMessage msg = myAgent.receive(mt);
 
         if (msg != null) {
+            countReceivedMsg++;
             String driverName = msg.getContent().split("@")[0];
             driverAgent.addPassenger(driverAgent.getDriverDescriptionByName(driverName));
+        }
+
+//        if (countReceivedMsg == amountPotentialPassengers) {
             Set<DriverDescription> result = new HashSet<>();
-            Set<DriverDescription> q = new HashSet<>();
-            for (DriverDescription dd : driverAgent.getPassenger())
-                q.add(new DriverDescription(dd));
+
+        Set<DriverDescription> q = new HashSet<>(driverAgent.getPassengers());
+//
+//            for (DriverDescription dd : driverAgent.getPassengers())
+//                q.add(new DriverDescription(dd));
+
             Set<DriverDescription> inq = new HashSet<>();
             calcMaxPassengersProfit(result, q, inq);
             // if (driverAgent.getMapGraph().bfs(driverAgent.getFrom(), driverAgent.getTo()) < getMaxProfit(result)){
+        String s = "";
             for (DriverDescription dd : result)
-                LOG.info("{}", dd);
-            //  }
+                s += "\r\n\t\t" + dd.toString();
 
-        }
+        LOG.info("{}", s);
+
+
+        LOG.info("all messages from potential passengers received");
+//        }
     }
 }
