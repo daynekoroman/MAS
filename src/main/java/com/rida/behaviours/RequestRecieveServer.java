@@ -15,25 +15,26 @@ import java.util.*;
  * Created by daine on 03.04.2016.
  */
 public class RequestRecieveServer extends CyclicBehaviour {
+    private DriverAgent driverAgent;
 
     private static final Logger LOG = LoggerFactory.getLogger(RequestRecieveServer.class);
 
-    private int getMaxProfit(Set<DriverDescription> cont){
+
+    private int getMaxProfit(Set<DriverDescription> cont) {
         DriverAgent driverAgent = (DriverAgent) myAgent;
         Graph g = driverAgent.getMapGraph();
 
         Set<Integer> vert = new HashSet<>();
         Map<Integer, Boolean> end = new HashMap<Integer, Boolean>();
-        for (DriverDescription dd : cont){
+        for (DriverDescription dd : cont) {
             vert.add(dd.getFrom());
         }
 
         int cur = 0;
         int sum = 0;
-        int min = 999999;
-        for(Integer t : vert){
-            if (min > g.bfs(driverAgent.getFrom(), t))
-            {
+        int min = Integer.MAX_VALUE;
+        for (Integer t : vert) {
+            if (min > g.bfs(driverAgent.getFrom(), t)) {
                 min = g.bfs(driverAgent.getFrom(), t);
                 cur = t;
             }
@@ -42,17 +43,16 @@ public class RequestRecieveServer extends CyclicBehaviour {
         vert.remove(cur);
         sum += min;
         end.put(cur, true);
-        for (DriverDescription dd : cont){
+        for (DriverDescription dd : cont) {
             if (dd.getFrom() == cur)
                 vert.add(dd.getTo());
         }
 
-        while (vert.size() >  1){
-            min = 9999999;
+        while (vert.size() > 1) {
+            min = Integer.MAX_VALUE;
             int curcur = 0;
-            for(Integer t : vert){
-                if (min > g.bfs(cur, t))
-                {
+            for (Integer t : vert) {
+                if (min > g.bfs(cur, t)) {
                     min = g.bfs(cur, t);
                     curcur = t;
                 }
@@ -60,7 +60,7 @@ public class RequestRecieveServer extends CyclicBehaviour {
             vert.remove(curcur);
             sum += min;
             cur = curcur;
-            for (DriverDescription dd : cont){
+            for (DriverDescription dd : cont) {
                 if (dd.getFrom() == cur)
                     vert.add(dd.getTo());
             }
@@ -69,7 +69,7 @@ public class RequestRecieveServer extends CyclicBehaviour {
         sum += g.bfs(cur, driverAgent.getTo());
 
         int maxway = 0;
-        for (DriverDescription dd : cont){
+        for (DriverDescription dd : cont) {
             maxway += g.bfs(dd.getFrom(), dd.getTo());
         }
         maxway += g.bfs(driverAgent.getFrom(), driverAgent.getTo());
@@ -78,25 +78,25 @@ public class RequestRecieveServer extends CyclicBehaviour {
         return maxway - sum;
     }
 
-    private int calcMaxPassengersProfit(Set<DriverDescription> best, Set<DriverDescription> q, Set<DriverDescription> inq){
+    private int calcMaxPassengersProfit(Set<DriverDescription> best, Set<DriverDescription> q, Set<DriverDescription> inq) {
         DriverAgent driverAgent = (DriverAgent) myAgent;
         Set<DriverDescription> result = new HashSet<>();
         Graph g = driverAgent.getMapGraph();
 
         int max = Integer.MIN_VALUE;
-        for (DriverDescription p1 : q){
+        for (DriverDescription p1 : q) {
             inq.add(p1);
             int temp_res1 = getMaxProfit(inq);
             if (max < temp_res1) {
                 max = temp_res1;
                 result = new HashSet<>(inq);
             }
-            if (inq.size() < 4){
-                Set<DriverDescription>temp_result2 = new HashSet<>();
+            if (inq.size() < 4) {
+                Set<DriverDescription> temp_result2 = new HashSet<>();
                 Set<DriverDescription> qq = new HashSet<>(q);
                 qq.remove(p1);
                 int temp_res2 = calcMaxPassengersProfit(temp_result2, qq, inq);
-                if (max < temp_res2){
+                if (max < temp_res2) {
                     max = temp_res2;
                     result = new HashSet<>(temp_result2);
                 }
@@ -119,7 +119,7 @@ public class RequestRecieveServer extends CyclicBehaviour {
                 MessageTemplate.MatchConversationId("bring-up"));
         ACLMessage msg = myAgent.receive(mt);
 
-        if (msg != null){
+        if (msg != null) {
             String driverName = msg.getContent().split("@")[0];
             driverAgent.addPassenger(driverAgent.getDriverDescriptionByName(driverName));
             Set<DriverDescription> result = new HashSet<>();
@@ -128,10 +128,10 @@ public class RequestRecieveServer extends CyclicBehaviour {
                 q.add(new DriverDescription(dd));
             Set<DriverDescription> inq = new HashSet<>();
             calcMaxPassengersProfit(result, q, inq);
-           // if (driverAgent.getMapGraph().bfs(driverAgent.getFrom(), driverAgent.getTo()) < getMaxProfit(result)){
-                for (DriverDescription dd : result)
-                    LOG.info("{}", dd);
-          //  }
+            // if (driverAgent.getMapGraph().bfs(driverAgent.getFrom(), driverAgent.getTo()) < getMaxProfit(result)){
+            for (DriverDescription dd : result)
+                LOG.info("{}", dd);
+            //  }
 
         }
     }
