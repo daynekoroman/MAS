@@ -13,3 +13,6 @@ buildNumber.properties
 # JADE files
 APDescription.txt
 MTPs-Main-Container.txt
+# for people without global gitignore
+.idea
+*.iml
