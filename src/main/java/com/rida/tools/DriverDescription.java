@@ -43,7 +43,7 @@ public class DriverDescription implements Comparable {
         mapGraph = g;
     }
 
-    public DriverDescription(DriverDescription dd){
+    public DriverDescription(DriverDescription dd) {
         this.way = dd.way;
         this.name = dd.name;
         this.value = dd.value;
@@ -56,7 +56,7 @@ public class DriverDescription implements Comparable {
     }
 
     public String toString() {
-        return (name.toString() + " " + way);
+        return (name + " " + way);
     }
 
 
@@ -70,8 +70,9 @@ public class DriverDescription implements Comparable {
 
     /**
      * Расчитать выгоду при поездке с данным водителем
-     * @param from
-     * @param to
+     *
+     * @param from Пункт отправления
+     * @param to   - пункт назначения
      */
     public void calcProfit(int from, int to) {
         int myFrom = Integer.parseInt(way.split(" ")[0]);
@@ -87,6 +88,7 @@ public class DriverDescription implements Comparable {
     /**
      * Перегружаем опертаор сравнения
      * Эквивалентны при равенстве именн и описанию путей
+     *
      * @param another - ссылка на другой объект
      * @return - эквиваленты объекты или нет
      */
@@ -125,24 +127,13 @@ public class DriverDescription implements Comparable {
 
     /**
      * Геттеры и сеттеры для приввтных полей класса
-     * @return
      */
 
-    public String getname() {
-        return name;
-    }
-
-    public String getway() {
-        return way;
-    }
 
     public int getProfit() {
         return profit;
     }
 
-    public int getWayLength() {
-        return wayLength;
-    }
 
     public int getFrom() {
         return from;

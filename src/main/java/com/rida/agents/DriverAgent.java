@@ -9,13 +9,13 @@ import com.rida.tools.Graph;
 import com.rida.tools.Trip;
 import jade.core.AID;
 import jade.core.Agent;
-import jdk.nashorn.internal.ir.Block;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 /**
+ * Агент - водитель
  * Created by daine on 03.04.2016.
  */
 public class DriverAgent extends Agent {
@@ -38,8 +38,8 @@ public class DriverAgent extends Agent {
         from = Integer.parseInt(args[1].toString());
         to = Integer.parseInt(args[2].toString());
         LOG.info("{} DriverAgent created. I want to go from {} to {}", new Date(), from, to);
-        drivers = new HashSet<DriverDescription>();
-        passengers = new HashSet<DriverDescription>();
+        drivers = new HashSet<>();
+        passengers = new HashSet<>();
 
         addBehaviour(new RegisterYellowPages());
         addBehaviour(new ListenYP());
