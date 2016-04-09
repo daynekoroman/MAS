@@ -22,9 +22,8 @@ public class RequestPerformer extends OneShotBehaviour {
         ArrayList<Trip> goodTrips = driverAgent.getGoodTrips();
         ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
 
-        for(Trip trip : goodTrips) {
+        for (Trip trip : goodTrips) {
             cfp.addReceiver(trip.getAid());
-
             LOG.info("I send a message to {}  with cost  {}", trip.getAid().getName(), trip.getCost());
         }
 

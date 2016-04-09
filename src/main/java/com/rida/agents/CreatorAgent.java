@@ -92,7 +92,7 @@ public class CreatorAgent extends Agent {
                     }
                 }
                 fin.close();
-                LOG.info("{} I create {} driver Agents", new Date(), driversCount);
+                LOG.info("I create {} driver Agents", driversCount);
             } catch (IOException e) {
                 doDelete();
                 e.printStackTrace();
@@ -105,7 +105,7 @@ public class CreatorAgent extends Agent {
 //        super.setup();
         mapGraph = getGraphFromFile();
         createAgentsFromFile();
-        LOG.info("I'm done");
+        LOG.info("I'm done to create  an Agents.");
         doDelete();
     }
 }

@@ -35,7 +35,7 @@ public class RegisterYellowPages extends OneShotBehaviour {
         } catch (FIPAException fe) {
             fe.printStackTrace();
         }
-        LOG.info("register YP");
+        LOG.info("I have been registered in Yellow Pages Service");
     }
 
 }

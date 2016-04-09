@@ -37,7 +37,7 @@ public class DriverAgent extends Agent {
         mapGraph = (Graph) args[0];
         from = Integer.parseInt(args[1].toString());
         to = Integer.parseInt(args[2].toString());
-        LOG.info("{} DriverAgent created. I want to go from {} to {}", new Date(), from, to);
+        LOG.info("DriverAgent created. I want to go from {} to {}", from, to);
         drivers = new HashSet<DriverDescription>();
         passengers = new HashSet<DriverDescription>();
 
@@ -79,7 +79,7 @@ public class DriverAgent extends Agent {
         }
     }
 
-    public Set<DriverDescription> getPassenger(){
+    public Set<DriverDescription> getPassenger() {
         return passengers;
     }
 
@@ -98,7 +98,6 @@ public class DriverAgent extends Agent {
 
         return list;
     }
-
 
 
 }
