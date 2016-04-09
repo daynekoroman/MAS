@@ -93,7 +93,6 @@ public class CreatorAgent extends Agent {
         } finally {
             doDelete();
         }
-        createAgentsFromFile();
         doDelete();
     }
 }

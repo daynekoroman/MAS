@@ -1,3 +1,4 @@
+/*
 package com.rida.behaviours;
 
 import com.rida.agents.DriverAgent;
@@ -9,10 +10,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 
+*/
 /**
  * Created by daine on 03.04.2016.
- */
-public class RequestPerformer extends OneShotBehaviour {
+ *//*
+
+public class RequestPerformerBehaviour extends OneShotBehaviour {
 
     private static final Logger LOG = LoggerFactory.getLogger(DriverAgent.class);
 
@@ -34,3 +37,4 @@ public class RequestPerformer extends OneShotBehaviour {
 
     }
 }
+*/

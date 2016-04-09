@@ -1,3 +1,4 @@
+/*
 package com.rida.behaviours;
 
 import com.rida.agents.DriverAgent;
@@ -11,9 +12,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+*/
 /**
  * Created by daine on 03.04.2016.
- */
+ *//*
+
 public class RequestRecieveServer extends CyclicBehaviour {
     private DriverAgent driverAgent;
     private int amountPotentialPassengers = -1;
@@ -158,3 +161,4 @@ public class RequestRecieveServer extends CyclicBehaviour {
 //        }
     }
 }
+*/

@@ -1,18 +1,17 @@
 package com.rida.agents;
 
-import com.rida.behaviours.ListenYP;
 import com.rida.behaviours.RegisterYellowPages;
-import com.rida.behaviours.RequestPerformer;
-import com.rida.behaviours.RequestRecieveServer;
+import com.rida.behaviours.YellowPageListenBehaviour;
 import com.rida.tools.DriverDescription;
 import com.rida.tools.Graph;
 import com.rida.tools.Trip;
-import jade.core.AID;
 import jade.core.Agent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Агент - водитель
@@ -21,30 +20,28 @@ import java.util.*;
 public class DriverAgent extends Agent {
 
     private static final Logger LOG = LoggerFactory.getLogger(DriverAgent.class);
-    private int from, to;
+    private DriverDescription description;
 
-    public Graph getMapGraph() {
-        return mapGraph;
-    }
-
-    private Graph mapGraph;
     private Set<DriverDescription> drivers;
     private Set<DriverDescription> passengers;
 
     @Override
     protected void setup() {
+        super.setup();
         Object[] args = getArguments();
-        mapGraph = (Graph) args[0];
-        from = Integer.parseInt(args[1].toString());
-        to = Integer.parseInt(args[2].toString());
+        Graph mapGraph = (Graph) args[0];
+        int from = Integer.parseInt(args[1].toString());
+        int to = Integer.parseInt(args[2].toString());
+        Trip trip = new Trip(from, to);
+        description = new DriverDescription(this.getName(), this.getAID(), trip);
         LOG.info("{} DriverAgent created. I want to go from {} to {}", new Date(), from, to);
         drivers = new HashSet<>();
         passengers = new HashSet<>();
 
         addBehaviour(new RegisterYellowPages());
-        addBehaviour(new ListenYP());
-        addBehaviour(new RequestPerformer());
-        addBehaviour(new RequestRecieveServer());
+        addBehaviour(new YellowPageListenBehaviour());
+        /*addBehaviour(new RequestPerformerBehaviour());
+        addBehaviour(new RequestRecieveServer());*/
     }
 
     public DriverDescription getDriverDescriptionByName(String name) {
@@ -56,16 +53,8 @@ public class DriverAgent extends Agent {
         throw new IllegalStateException("Not found driver");
     }
 
-    public int getFrom() {
-        return from;
-    }
-
-    public int getTo() {
-        return to;
-    }
-
-    public void addDriver(String name, String way, AID a) {
-        drivers.add(new DriverDescription(name, way, a, mapGraph));
+    public void addDriver(DriverDescription driverDescription) {
+        drivers.add(driverDescription);
     }
 
     public void addPassenger(DriverDescription ds) {
@@ -74,8 +63,7 @@ public class DriverAgent extends Agent {
 
     public void calculateProfit() {
         for (DriverDescription descr : drivers) {
-            descr.calcWayLength();
-            descr.calcProfit(from, to);
+
         }
     }
 
@@ -84,10 +72,8 @@ public class DriverAgent extends Agent {
 
     }
 
-    /**
-     * те, кому нас могут отвезти выгодно
-     */
-    public ArrayList<Trip> getGoodTrips() {
+
+    /*public ArrayList<Trip> getGoodTrips() {
         ArrayList<Trip> list = new ArrayList<>();
         for (DriverDescription driver : drivers) {
             if (driver.getProfit() > 0 && driver.getReverseProfit() <= driver.getProfit()) {
@@ -110,5 +96,8 @@ public class DriverAgent extends Agent {
         }
 
         return count;
+    }*/
+    public DriverDescription getDescription() {
+        return description;
     }
 }

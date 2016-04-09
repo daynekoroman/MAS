@@ -40,4 +40,14 @@ public class Trip {
     public void setTo(int to) {
         this.to = to;
     }
+
+    @Override
+    public String toString() {
+        return String.format("From %d To %d",from, to);
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return (Object) new Trip(this.from, this.to);
+    }
 }
