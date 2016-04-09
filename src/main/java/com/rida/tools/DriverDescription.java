@@ -8,7 +8,8 @@ import jade.core.AID;
  */
 public class DriverDescription implements Comparable {
     private String way;
-
+    private Trip trip;
+    private DriverDescription self = this;
     public String getName() {
         return name;
     }
@@ -43,6 +44,12 @@ public class DriverDescription implements Comparable {
         mapGraph = g;
     }
 
+    public class Builder {
+        public Builder setTrip(Trip trip) {
+            self.trip = trip;
+            return this;
+        }
+    }
     public DriverDescription(DriverDescription dd) {
         this.way = dd.way;
         this.name = dd.name;
