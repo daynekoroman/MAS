@@ -57,10 +57,10 @@ public class RequestRecieveServer extends CyclicBehaviour {
 
     public static void main(String[] args) {
         Set<DriverDescription> driverDescriptions = new HashSet<>();
-        driverDescriptions.add(new DriverDescription("bla", null, new Trip(0, 1)));
-        driverDescriptions.add(new DriverDescription("bla", null, new Trip(1, 2)));
-        driverDescriptions.add(new DriverDescription("bla", null, new Trip(3, 4)));
-        driverDescriptions.add(new DriverDescription("bla", null, new Trip(5, 6)));
+        Random random = new Random();
+        for (int i = 0; i < 50; i++){
+            driverDescriptions.add(new DriverDescription("bla", null, new Trip(random.nextInt(50), random.nextInt(50))));
+        }
         testSubsetGenerator(driverDescriptions);
 
     }
