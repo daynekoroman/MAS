@@ -1,27 +1,24 @@
 package com.rida.behaviours;
 
-import com.google.common.collect.Sets;
 import com.rida.agents.DriverAgent;
 import com.rida.tools.DriverDescription;
 import com.rida.tools.Graph;
 import com.rida.tools.SubsetGenerator;
 import com.rida.tools.Trip;
-import jade.core.AID;
-import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 /**
- * Created by daine on 03.04.2016.
+ * Created by daine on 10.04.2016.
  */
-public class RequestRecieveServer extends CyclicBehaviour {
-    private DriverAgent driverAgent;
+public class ProposePerformer extends OneShotBehaviour {
+    private static final Logger LOG = LoggerFactory.getLogger(ProposePerformer.class);
 
-    private static final Logger LOG = LoggerFactory.getLogger(RequestRecieveServer.class);
+    DriverAgent driverAgent;
 
     private static void testSubsetGenerator(Set<DriverDescription> set) {
         SubsetGenerator<DriverDescription> subsetGenerator = new SubsetGenerator<>();
@@ -66,7 +63,7 @@ public class RequestRecieveServer extends CyclicBehaviour {
     }
 
     private int getMaxProfit(Set<DriverDescription> cont) {
-        DriverAgent driverAgent = (DriverAgent) myAgent;
+        //DriverAgent driverAgent = (DriverAgent) myAgent;
         Graph g = driverAgent.getMapGraph();
 
         Set<Integer> vert = new HashSet<>();
@@ -124,7 +121,7 @@ public class RequestRecieveServer extends CyclicBehaviour {
     }
 
     private int calcMaxPassengersProfit(Set<DriverDescription> best, Set<DriverDescription> q, Set<DriverDescription> inq) {
-        DriverAgent driverAgent = (DriverAgent) myAgent;
+        //DriverAgent driverAgent = (DriverAgent) myAgent;
         Set<DriverDescription> result = new HashSet<>();
         Graph g = driverAgent.getMapGraph();
 
@@ -158,30 +155,22 @@ public class RequestRecieveServer extends CyclicBehaviour {
 
     @Override
     public void action() {
-        DriverAgent driverAgent = (DriverAgent) myAgent;
+        driverAgent = (DriverAgent) myAgent;
 
-        MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CFP),
-                MessageTemplate.MatchConversationId("bring-up"));
-        ACLMessage msg = myAgent.receive(mt);
+        Set<DriverDescription> result = calcPassengersProfit(driverAgent.getPassengers());
+        driverAgent.setBestPassengers(result);
+        String s = "";
+        for (DriverDescription dd : result)
+            s += "\r\n\t\t" + dd.toString();
+        LOG.info("{}", s);
 
-        if (msg != null) {
-            AID driverName = msg.getSender();
-            driverAgent.addPassenger(driverAgent.getDriverDescriptionByName(driverName));
-            driverAgent.getPaseengerDescriptionByName(driverName).setCost(Double.parseDouble(msg.getContent()));
-            /*Set<DriverDescription> result = new HashSet<>();
-            Set<DriverDescription> q = new HashSet<>();
-            for (DriverDescription dd : driverAgent.getPassengers())
-                q.add(new DriverDescription(dd));
-            Set<DriverDescription> inq = new HashSet<>();
-            calcMaxPassengersProfit(result, q, inq);*/
-            // if (driverAgent.getMapGraph().bfs(driverAgent.getFrom(), driverAgent.getTo()) < getMaxProfit(result)){
-            Set<DriverDescription> result = calcPassengersProfit(driverAgent.getPassengers());
-            String s = "";
-            for (DriverDescription dd : result)
-                s += "\r\n\t\t" + dd.toString();
-            LOG.info("{}", s);
-            //  }
-
+        ACLMessage propose = new ACLMessage(ACLMessage.PROPOSE);
+        for (DriverDescription dd : driverAgent.getBestPassengers()){
+            propose.addReceiver(dd.getAid());
+            LOG.info("I send a message to {} with proposal to bring him up", dd.getName());
         }
+        propose.setContent("Ok. Lets go");
+        propose.setConversationId("bring-up");
+        driverAgent.send(propose);
     }
 }

@@ -1,9 +1,6 @@
 package com.rida.agents;
 
-import com.rida.behaviours.RegisterYellowPages;
-import com.rida.behaviours.RequestPerformerBehaviour;
-import com.rida.behaviours.RequestRecieveServer;
-import com.rida.behaviours.YellowPageListenBehaviour;
+import com.rida.behaviours.*;
 import com.rida.tools.DriverDescription;
 import com.rida.tools.Graph;
 import com.rida.tools.Helper;
@@ -26,7 +23,11 @@ public class DriverAgent extends Agent {
     private Graph mapGraph;
 
     private Set<DriverDescription> drivers;
+    private Set<DriverDescription> potentialDrivers;
     private Set<DriverDescription> passengers;
+    private Set<DriverDescription> bestPassengers;
+
+    private int potentialPassengerCount = 0;
 
     @Override
     protected void setup() {
@@ -39,12 +40,15 @@ public class DriverAgent extends Agent {
         description = new DriverDescription(this.getName(), this.getAID(), trip);
         LOG.info("{} DriverAgent created. I want to go from {} to {}", new Date(), from, to);
         drivers = new HashSet<>();
+        potentialDrivers = new HashSet<>();
         passengers = new HashSet<>();
 
         addBehaviour(new RegisterYellowPages());
         addBehaviour(new YellowPageListenBehaviour());
         addBehaviour(new RequestPerformerBehaviour());
-        addBehaviour(new RequestRecieveServer());
+        addBehaviour(new RequestRecieveServerBehaviour());
+
+        addBehaviour(new ProposeRecieverServerBehaviour());
     }
 
     public Set<DriverDescription> getDrivers() {
@@ -83,6 +87,9 @@ public class DriverAgent extends Agent {
 
     }
 
+    public Set<DriverDescription> getPotentialDrivers() {
+        return potentialDrivers;
+    }
 
     public Set<DriverDescription> getGoodTrips() {
         Set<DriverDescription> set = new HashSet<>();
@@ -94,9 +101,14 @@ public class DriverAgent extends Agent {
             int reverseProfit = Helper.calcProfit(agentTrip, driverTrip, mapGraph);
             if (profit > 0 && reverseProfit <= profit) {
                 Random rand = new Random();
-                double x = (double) profit * 0.0001 * (rand.nextInt() % 2000 - 1000);
-                driver.setCost(x + profit);
+                double x = (double) profit * 0.0001 * (rand.nextInt() % 20 - 10);
+                driver.setCost(x + profit + (double)mapGraph.bfs(agentTrip.getFrom(), agentTrip.getTo()) /  mapGraph.bfs(driverTrip.getFrom(), driverTrip.getTo()));
                 set.add(driver);
+                potentialDrivers.add(driver);
+            }
+            if (reverseProfit > 0 && reverseProfit > profit)
+            {
+                potentialPassengerCount ++;
             }
         }
         return set;
@@ -119,5 +131,25 @@ public class DriverAgent extends Agent {
 
     public Graph getMapGraph() {
         return mapGraph;
+    }
+
+    public void deletePotentialDriver(DriverDescription dd){
+        potentialDrivers.remove(dd);
+    }
+
+    public void deleteBestPassenger(DriverDescription dd){
+        bestPassengers.remove(dd);
+    }
+
+    public void setBestPassengers(Set<DriverDescription> bestPassengers) {
+        this.bestPassengers = bestPassengers;
+    }
+
+    public Set<DriverDescription> getBestPassengers() {
+        return bestPassengers;
+    }
+
+    public int getPotentialPassengerCount() {
+        return potentialPassengerCount;
     }
 }

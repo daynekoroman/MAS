@@ -43,7 +43,7 @@ public class Trip {
 
     @Override
     public String toString() {
-        return String.format("From %d To %d by %1.2f", from, to, cost);
+        return String.format("From %d To %d by %1.2f€", from, to, cost);
     }
 
     @Override

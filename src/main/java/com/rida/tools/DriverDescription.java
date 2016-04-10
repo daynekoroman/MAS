@@ -36,6 +36,14 @@ public class DriverDescription implements Comparable {
         this.name = dd.getName();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        DriverDescription t = (DriverDescription) obj;
+        if (this.name.equals(getName()))
+            return true;
+        else
+            return false;
+    }
 
     @Override
     public int compareTo(Object o) {
