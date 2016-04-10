@@ -57,7 +57,6 @@ public class YellowPageListenBehaviour extends OneShotBehaviour {
                 }
             }
 
-            driverAgent.calculateProfit();
 
         } catch (FIPAException e) {
             e.printStackTrace();

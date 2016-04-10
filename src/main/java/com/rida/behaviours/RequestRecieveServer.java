@@ -1,9 +1,9 @@
-/*
 package com.rida.behaviours;
 
 import com.rida.agents.DriverAgent;
 import com.rida.tools.DriverDescription;
 import com.rida.tools.Graph;
+import jade.core.AID;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
@@ -12,15 +12,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-*/
 /**
  * Created by daine on 03.04.2016.
- *//*
-
+ */
 public class RequestRecieveServer extends CyclicBehaviour {
     private DriverAgent driverAgent;
-    private int amountPotentialPassengers = -1;
-    private int countReceivedMsg = 0;
 
     private static final Logger LOG = LoggerFactory.getLogger(RequestRecieveServer.class);
 
@@ -32,15 +28,15 @@ public class RequestRecieveServer extends CyclicBehaviour {
         Set<Integer> vert = new HashSet<>();
         Map<Integer, Boolean> end = new HashMap<Integer, Boolean>();
         for (DriverDescription dd : cont) {
-            vert.add(dd.getFrom());
+            vert.add(dd.getTrip().getFrom());
         }
 
         int cur = 0;
         int sum = 0;
         int min = Integer.MAX_VALUE;
         for (Integer t : vert) {
-            if (min > g.bfs(driverAgent.getFrom(), t)) {
-                min = g.bfs(driverAgent.getFrom(), t);
+            if (min > g.bfs(driverAgent.getDescription().getTrip().getFrom(), t)) {
+                min = g.bfs(driverAgent.getDescription().getTrip().getFrom(), t);
                 cur = t;
             }
         }
@@ -49,8 +45,8 @@ public class RequestRecieveServer extends CyclicBehaviour {
         sum += min;
         end.put(cur, true);
         for (DriverDescription dd : cont) {
-            if (dd.getFrom() == cur)
-                vert.add(dd.getTo());
+            if (dd.getTrip().getFrom() == cur)
+                vert.add(dd.getTrip().getTo());
         }
 
         while (vert.size() > 1) {
@@ -66,18 +62,18 @@ public class RequestRecieveServer extends CyclicBehaviour {
             sum += min;
             cur = curcur;
             for (DriverDescription dd : cont) {
-                if (dd.getFrom() == cur)
-                    vert.add(dd.getTo());
+                if (dd.getTrip().getFrom() == cur)
+                    vert.add(dd.getTrip().getTo());
             }
             end.put(cur, true);
         }
-        sum += g.bfs(cur, driverAgent.getTo());
+        sum += g.bfs(cur, driverAgent.getDescription().getTrip().getTo());
 
         int maxway = 0;
         for (DriverDescription dd : cont) {
-            maxway += g.bfs(dd.getFrom(), dd.getTo());
+            maxway += g.bfs(dd.getTrip().getFrom(), dd.getTrip().getTo());
         }
-        maxway += g.bfs(driverAgent.getFrom(), driverAgent.getTo());
+        maxway += g.bfs(driverAgent.getDescription().getTrip().getFrom(), driverAgent.getDescription().getTrip().getTo());
 
         //System.out.println(maxway - sum);
         return maxway - sum;
@@ -116,49 +112,31 @@ public class RequestRecieveServer extends CyclicBehaviour {
         return max;
     }
 
-
     @Override
     public void action() {
         DriverAgent driverAgent = (DriverAgent) myAgent;
-
-        if (amountPotentialPassengers < 0) {
-            amountPotentialPassengers = driverAgent.calcAmountPotentialPassengers();
-        }
-
-        if (countReceivedMsg >= amountPotentialPassengers) {
-            return;
-        }
 
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CFP),
                 MessageTemplate.MatchConversationId("bring-up"));
         ACLMessage msg = myAgent.receive(mt);
 
         if (msg != null) {
-            countReceivedMsg++;
-            String driverName = msg.getContent().split("@")[0];
+            AID driverName = msg.getSender();
             driverAgent.addPassenger(driverAgent.getDriverDescriptionByName(driverName));
-        }
-
-//        if (countReceivedMsg == amountPotentialPassengers) {
+            driverAgent.getPaseengerDescriptionByName(driverName).setCost(Double.parseDouble(msg.getContent()));
             Set<DriverDescription> result = new HashSet<>();
-
-        Set<DriverDescription> q = new HashSet<>(driverAgent.getPassengers());
-//
-//            for (DriverDescription dd : driverAgent.getPassengers())
-//                q.add(new DriverDescription(dd));
-
+            Set<DriverDescription> q = new HashSet<>();
+            for (DriverDescription dd : driverAgent.getPassengers())
+                q.add(new DriverDescription(dd));
             Set<DriverDescription> inq = new HashSet<>();
             calcMaxPassengersProfit(result, q, inq);
             // if (driverAgent.getMapGraph().bfs(driverAgent.getFrom(), driverAgent.getTo()) < getMaxProfit(result)){
-        String s = "";
+            String s = "";
             for (DriverDescription dd : result)
                 s += "\r\n\t\t" + dd.toString();
+            LOG.info("{}", s);
+            //  }
 
-        LOG.info("{}", s);
-
-
-        LOG.info("all messages from potential passengers received");
-//        }
+        }
     }
 }
-*/

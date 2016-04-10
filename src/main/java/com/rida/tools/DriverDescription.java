@@ -7,7 +7,6 @@ import jade.core.AID;
  * Created by daine on 04.04.2016.
  */
 public class DriverDescription implements Comparable {
-    private String way;
     private Trip trip;
     private DriverDescription self = this;
 
@@ -29,7 +28,12 @@ public class DriverDescription implements Comparable {
 
     public DriverDescription(DriverDescription dd) {
         this.aid = dd.getAid();
-        this.trip = dd.getTrip();
+        try {
+            this.trip = (Trip) dd.getTrip().clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        this.name = dd.getName();
     }
 
 
@@ -45,6 +49,10 @@ public class DriverDescription implements Comparable {
         return 0;
     }
 
+    public void setCost(double cost) {
+        trip.setCost(cost);
+    }
+
     public Trip getTrip() {
         return trip;
     }
@@ -55,6 +63,11 @@ public class DriverDescription implements Comparable {
 
     public AID getAid() {
         return aid;
+    }
+
+    @Override
+    public String toString() {
+        return (name.toString().split("@")[0] + " " + trip);
     }
 
     /**

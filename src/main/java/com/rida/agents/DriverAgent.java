@@ -1,17 +1,19 @@
 package com.rida.agents;
 
 import com.rida.behaviours.RegisterYellowPages;
+import com.rida.behaviours.RequestPerformerBehaviour;
+import com.rida.behaviours.RequestRecieveServer;
 import com.rida.behaviours.YellowPageListenBehaviour;
 import com.rida.tools.DriverDescription;
 import com.rida.tools.Graph;
+import com.rida.tools.Helper;
 import com.rida.tools.Trip;
+import jade.core.AID;
 import jade.core.Agent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Агент - водитель
@@ -21,6 +23,7 @@ public class DriverAgent extends Agent {
 
     private static final Logger LOG = LoggerFactory.getLogger(DriverAgent.class);
     private DriverDescription description;
+    private Graph mapGraph;
 
     private Set<DriverDescription> drivers;
     private Set<DriverDescription> passengers;
@@ -29,7 +32,7 @@ public class DriverAgent extends Agent {
     protected void setup() {
         super.setup();
         Object[] args = getArguments();
-        Graph mapGraph = (Graph) args[0];
+        mapGraph = (Graph) args[0];
         int from = Integer.parseInt(args[1].toString());
         int to = Integer.parseInt(args[2].toString());
         Trip trip = new Trip(from, to);
@@ -40,17 +43,30 @@ public class DriverAgent extends Agent {
 
         addBehaviour(new RegisterYellowPages());
         addBehaviour(new YellowPageListenBehaviour());
-        /*addBehaviour(new RequestPerformerBehaviour());
-        addBehaviour(new RequestRecieveServer());*/
+        addBehaviour(new RequestPerformerBehaviour());
+        addBehaviour(new RequestRecieveServer());
     }
 
-    public DriverDescription getDriverDescriptionByName(String name) {
+    public Set<DriverDescription> getDrivers() {
+        return drivers;
+    }
+
+    public DriverDescription getDriverDescriptionByName(AID aid) {
         for (DriverDescription dd : drivers) {
-            if (dd.getName().equals(name)) {
+            if (dd.getAid().toString().equals(aid.toString())) {
                 return dd;
             }
         }
         throw new IllegalStateException("Not found driver");
+    }
+
+    public DriverDescription getPaseengerDescriptionByName(AID aid) {
+        for (DriverDescription dd : passengers) {
+            if (dd.getAid().toString().equals(aid.toString())) {
+                return dd;
+            }
+        }
+        throw new IllegalStateException("Not found passenger");
     }
 
     public void addDriver(DriverDescription driverDescription) {
@@ -61,11 +77,6 @@ public class DriverAgent extends Agent {
         passengers.add(ds);
     }
 
-    public void calculateProfit() {
-        for (DriverDescription descr : drivers) {
-
-        }
-    }
 
     public Set<DriverDescription> getPassengers() {
         return new HashSet<>(passengers);
@@ -73,20 +84,25 @@ public class DriverAgent extends Agent {
     }
 
 
-    /*public ArrayList<Trip> getGoodTrips() {
-        ArrayList<Trip> list = new ArrayList<>();
+    public Set<DriverDescription> getGoodTrips() {
+        Set<DriverDescription> set = new HashSet<>();
+        Trip agentTrip = description.getTrip();
+
         for (DriverDescription driver : drivers) {
-            if (driver.getProfit() > 0 && driver.getReverseProfit() <= driver.getProfit()) {
+            Trip driverTrip = driver.getTrip();
+            int profit = Helper.calcProfit(driverTrip, agentTrip, mapGraph);
+            int reverseProfit = Helper.calcProfit(agentTrip, driverTrip, mapGraph);
+            if (profit > 0 && reverseProfit <= profit) {
                 Random rand = new Random();
-                double x = (double) driver.getProfit() * 0.0001 * (rand.nextInt() % 2000 - 1000);
-                list.add(new Trip(driver.getValue(), driver.getProfit() + x));
+                double x = (double) profit * 0.0001 * (rand.nextInt() % 2000 - 1000);
+                driver.setCost(x + profit);
+                set.add(driver);
             }
         }
-
-        return list;
+        return set;
     }
 
-
+    /*
     public int calcAmountPotentialPassengers() {
         int count = 0;
         for (DriverDescription descr : drivers) {
@@ -99,5 +115,9 @@ public class DriverAgent extends Agent {
     }*/
     public DriverDescription getDescription() {
         return description;
+    }
+
+    public Graph getMapGraph() {
+        return mapGraph;
     }
 }

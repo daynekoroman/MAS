@@ -43,11 +43,13 @@ public class Trip {
 
     @Override
     public String toString() {
-        return String.format("From %d To %d",from, to);
+        return String.format("From %d To %d by %1.2f", from, to, cost);
     }
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        return (Object) new Trip(this.from, this.to);
+        Trip t =  new Trip(this.from, this.to);
+        t.setCost(this.cost);
+        return t;
     }
 }
