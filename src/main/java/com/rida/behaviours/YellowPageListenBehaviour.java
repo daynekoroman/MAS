@@ -21,10 +21,6 @@ public class YellowPageListenBehaviour extends OneShotBehaviour {
 
     private static final Logger LOG = LoggerFactory.getLogger(YellowPageListenBehaviour.class);
 
-    private String parseName(DFAgentDescription stupidName) {
-        return stupidName.getName().toString().split(" ")[3].split("@")[0];
-    }
-
     @Override
     public void action() {
         try {
