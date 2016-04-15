@@ -106,7 +106,7 @@ public class DriverAgent extends Agent {
                 set.add(driver);
                 potentialDrivers.add(driver);
             }
-            if (reverseProfit > 0 && reverseProfit > profit)
+            if (reverseProfit > 0 && reverseProfit >= profit)
             {
                 potentialPassengerCount ++;
             }
@@ -137,8 +137,8 @@ public class DriverAgent extends Agent {
         potentialDrivers.remove(dd);
     }
 
-    public void deleteBestPassenger(DriverDescription dd){
-        bestPassengers.remove(dd);
+    public void deletePassenger(DriverDescription dd){
+        passengers.remove(dd);
     }
 
     public void setBestPassengers(Set<DriverDescription> bestPassengers) {

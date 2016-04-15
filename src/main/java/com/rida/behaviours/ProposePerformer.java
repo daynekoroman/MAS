@@ -159,18 +159,23 @@ public class ProposePerformer extends OneShotBehaviour {
 
         Set<DriverDescription> result = calcPassengersProfit(driverAgent.getPassengers());
         driverAgent.setBestPassengers(result);
-        String s = "";
-        for (DriverDescription dd : result)
-            s += "\r\n\t\t" + dd.toString();
-        LOG.info("{}", s);
-
+        String s = "", content = "";
         ACLMessage propose = new ACLMessage(ACLMessage.PROPOSE);
-        for (DriverDescription dd : driverAgent.getBestPassengers()){
-            propose.addReceiver(dd.getAid());
-            LOG.info("I send a message to {} with proposal to bring him up", dd.getName());
+        if (result != null) {
+            for (DriverDescription dd : result) {
+                s += "\r\n\t\t" + dd.toString();
+                propose.addReceiver(dd.getAid());
+                content += dd.getName() + " ";
+            }
+            LOG.info("I send a message with proposal to bring up to {}", s);
+
+            propose.setContent(content);
+            propose.setConversationId("bring-up");
+            driverAgent.send(propose);
         }
-        propose.setContent("Ok. Lets go");
-        propose.setConversationId("bring-up");
-        driverAgent.send(propose);
+        else{
+            LOG.info("I go alone");
+            myAgent.doDelete();
+        }
     }
 }

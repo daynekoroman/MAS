@@ -7,10 +7,12 @@ import com.rida.tools.SubsetGenerator;
 import com.rida.tools.Trip;
 import jade.core.AID;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.core.behaviours.SimpleBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 import java.util.*;
 
@@ -19,25 +21,39 @@ import java.util.*;
  */
 public class RequestRecieveServerBehaviour extends CyclicBehaviour {
     private DriverAgent driverAgent;
-    private static int msgRecieved = 0;
+    private boolean end = false;
+    private int msgRecieved = 0;
+    private boolean shouldNotDrive = false, first = false;
     private static final Logger LOG = LoggerFactory.getLogger(RequestRecieveServerBehaviour.class);
-
-    private static boolean done = false;
 
 
     private boolean shouldDrive() {
         Set<DriverDescription> d = driverAgent.getPotentialDrivers();
         Set<DriverDescription> p = driverAgent.getPassengers();
-        if (d.size() != p.size())
+
+        MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
+                MessageTemplate.MatchConversationId("bring-up"));
+        ACLMessage msg = myAgent.receive(mt);
+        if (msg != null || shouldNotDrive) {
+            shouldNotDrive = true;
             return false;
-        for (DriverDescription dd : d) {
-            for (DriverDescription ddp : p) {
-                if (ddp.getName() == dd.getName() && dd.getTrip().getCost() > ddp.getTrip().getCost()) {
-                    return false;
-                }
-            }
         }
 
+        for (DriverDescription dd : d) {
+            if (!p.contains(dd)){
+                return false;
+            }
+        }
+        if (!first) {
+            first = true;
+            msg = new ACLMessage(ACLMessage.INFORM);
+            for (DriverDescription dd : d) {
+                msg.addReceiver(dd.getAid());
+            }
+            msg.setContent("I'm first");
+            msg.setConversationId("bring-up");
+            driverAgent.send(msg);
+        }
         return true;
     }
 
@@ -62,12 +78,16 @@ public class RequestRecieveServerBehaviour extends CyclicBehaviour {
             calcMaxPassengersProfit(result, q, inq);*/
             // if (driverAgent.getMapGraph().bfs(driverAgent.getFrom(), driverAgent.getTo()) < getMaxProfit(result)){
         }
-        if (msgRecieved == driverAgent.getPotentialPassengerCount() && !done) {
-            done = true;
+        if (msgRecieved == driverAgent.getPotentialPassengerCount() && !end) {
             //  }
             if (driverAgent.getPotentialDrivers().size() == 0 || shouldDrive()) {
                 myAgent.addBehaviour(new ProposePerformer());
+                end = true;
             }
         }
+        else{
+            //action();
+        }
     }
+
 }
