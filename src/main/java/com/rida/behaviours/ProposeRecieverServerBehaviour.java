@@ -8,6 +8,7 @@ import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -19,7 +20,8 @@ public class ProposeRecieverServerBehaviour extends CyclicBehaviour {
 
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(ProposeRecieverServerBehaviour.class);
     DriverAgent driverAgent;
-    private Set<DriverDescription> waitingDrivers = new HashSet<DriverDescription>();
+    private ArrayList<DriverDescription> waitingDrivers = new ArrayList<DriverDescription>();
+    private ArrayList<Integer> potentialDriversCount = new ArrayList<>();
     private Set<DriverDescription> waitingPassengers = new HashSet<DriverDescription>();
     private int stage = 0;
     private int accCount = 0;
@@ -47,7 +49,12 @@ public class ProposeRecieverServerBehaviour extends CyclicBehaviour {
 
         if (msg != null) {
             waitingDrivers.add(driverAgent.getDriverDescriptionByName(msg.getSender()));
-            if ((driverAgent.getPotentialDrivers().size() == waitingDrivers.size() + getTripDrivers(msg.getContent())) && stage == 0) {
+            potentialDriversCount.add(getTripDrivers(msg.getContent()));
+            int answersCount = 0;
+            for (int i = 0; i < potentialDriversCount.size(); i ++){
+                answersCount += potentialDriversCount.get(i);
+            }
+            if ((driverAgent.getPotentialDrivers().size() == waitingDrivers.size() + answersCount) && stage == 0) {
                 DriverDescription top = null;
                 double min = 999999999;
                 for (DriverDescription dd : waitingDrivers) {
@@ -122,6 +129,7 @@ public class ProposeRecieverServerBehaviour extends CyclicBehaviour {
         msg = myAgent.receive(mt);
 
         if (msg != null) {
+            potentialDriversCount.remove(waitingDrivers.indexOf(driverAgent.getDriverDescriptionByName(msg.getSender())));
             waitingDrivers.remove(driverAgent.getPaseengerDescriptionByName(msg.getSender()));
             stage = 0;
         }
@@ -134,6 +142,7 @@ public class ProposeRecieverServerBehaviour extends CyclicBehaviour {
         if (msg != null) {
             //waitingDrivers.add(driverAgent.getDriverDescriptionByName(msg.getSender()));
             driverAgent.deletePotentialDriver(driverAgent.getDriverDescriptionByName(msg.getSender()));
+            potentialDriversCount.remove(waitingDrivers.indexOf(driverAgent.getDriverDescriptionByName(msg.getSender())));
             waitingDrivers.remove(driverAgent.getDriverDescriptionByName(msg.getSender()));
             stage = 0;
         }
