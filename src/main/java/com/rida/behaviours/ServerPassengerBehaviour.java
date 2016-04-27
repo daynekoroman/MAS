@@ -2,21 +2,13 @@ package com.rida.behaviours;
 
 import com.rida.agents.DriverAgent;
 import com.rida.tools.DriverDescription;
-import com.rida.tools.Graph;
-import com.rida.tools.SubsetGenerator;
-import com.rida.tools.Trip;
 import jade.core.AID;
 import jade.core.Agent;
-import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.SimpleBehaviour;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-
 
 import java.util.*;
 
