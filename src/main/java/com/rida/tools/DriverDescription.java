@@ -1,154 +1,81 @@
 package com.rida.tools;
 
+import java.util.Comparator;
+
 import jade.core.AID;
 
 /**
  * Описывает водителя
  * Created by daine on 04.04.2016.
  */
-public class DriverDescription implements Comparable {
-    private String way;
+public class DriverDescription {
+    private Trip trip;
+    private String name;
+    private AID aid;
+
 
     public String getName() {
         return name;
     }
 
-    private String name;
-
-    public AID getValue() {
-        return value;
-    }
-
-    private AID value;//уникальный идентификатор
-    private int from, to;// Откуда едем и куда
-    private int wayLength;//Длина пути
-    private int profit;
-    private int reverseProfit;
-    private Graph mapGraph;// ссылка на граф
-
-    /**
-     * Конструктор класса описания
-     *
-     * @param way  - часть соообщения, содержащая информацию о путе
-     * @param name - Имя агента
-     * @param a    - Уникальный идентификатор агента
-     * @param g    - Граф путей
-     */
-    public DriverDescription(String way, String name, AID a, Graph g) {
-        this.way = way;
+    public DriverDescription(String name, AID aid, Trip trip) {
+        this.trip = trip;
         this.name = name;
-        this.value = a;
-        from = Integer.parseInt(way.split(" ")[0]);
-        to = Integer.parseInt(way.split(" ")[1]);
-        mapGraph = g;
+        this.aid = aid;
     }
 
-    public DriverDescription(DriverDescription dd){
-        this.way = dd.way;
-        this.name = dd.name;
-        this.value = dd.value;
-        this.from = dd.from;
-        this.to = dd.to;
-        this.wayLength = dd.wayLength;
-        this.profit = dd.profit;
-        this.reverseProfit = dd.reverseProfit;
-        this.mapGraph = dd.mapGraph;
+    public DriverDescription(DriverDescription dd) {
+        this.aid = dd.getAid();
+        try {
+            this.trip = (Trip) dd.getTrip().clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        this.name = dd.getName();
     }
 
-    public String toString() {
-        return (name.toString() + " " + way);
-    }
-
-
-    /**
-     * Расчитать длину пути
-     */
-    public void calcWayLength() {
-        wayLength = mapGraph.bfs(Integer.parseInt(way.split(" ")[0]), Integer.parseInt(way.split(" ")[1]));
-    }
-
-
-    /**
-     * Расчитать выгоду при поездке с данным водителем
-     * @param from
-     * @param to
-     */
-    public void calcProfit(int from, int to) {
-        int myFrom = Integer.parseInt(way.split(" ")[0]);
-        int myTo = Integer.parseInt(way.split(" ")[1]);
-
-        reverseProfit = mapGraph.bfs(myFrom, myTo) + mapGraph.bfs(from, to) -
-                (mapGraph.bfs(from, myFrom) + mapGraph.bfs(myFrom, myTo) + mapGraph.bfs(myTo, to));
-
-        profit = mapGraph.bfs(myFrom, myTo) + mapGraph.bfs(from, to) -
-                (mapGraph.bfs(myFrom, from) + mapGraph.bfs(from, to) + mapGraph.bfs(to, myTo));
-    }
-
-    /**
-     * Перегружаем опертаор сравнения
-     * Эквивалентны при равенстве именн и описанию путей
-     * @param another - ссылка на другой объект
-     * @return - эквиваленты объекты или нет
-     */
     @Override
-    public boolean equals(Object another) {
-        if (another.getClass() != this.getClass()) {
+    public boolean equals(Object obj) {
+        DriverDescription t = (DriverDescription) obj;
+        if (this.name.equals(getName()))
+            return true;
+        else
             return false;
-        }
-
-        DriverDescription other = (DriverDescription) another;
-        return this.name.equals(other.name) && this.way.equals(other.way);
-
     }
 
+    public void setCost(double cost) {
+        trip.setCost(cost);
+    }
+
+    public Trip getTrip() {
+        return trip;
+    }
+
+    public void setTrip(Trip trip) {
+        this.trip = trip;
+    }
+
+    public AID getAid() {
+        return aid;
+    }
 
     @Override
-    public int hashCode() {
-        return this.name.hashCode() * this.way.hashCode();
+    public String toString() {
+        return (name.toString().split("@")[0] + " " + trip);
     }
 
+    public static Comparator<DriverDescription> costComp = new Comparator<DriverDescription>() {
 
-    public int getReverseProfit() {
-        return reverseProfit;
-    }
+        public int compare(DriverDescription dd1, DriverDescription dd2) {
+            double x1 = dd1.getTrip().getCost();
+            double x2 = dd2.getTrip().getCost();
 
-    @Override
-    public int compareTo(Object o) {
-        DriverDescription compDriverDescription = (DriverDescription) o;
-        if (reverseProfit == compDriverDescription.reverseProfit) return 0;
-        if (reverseProfit > compDriverDescription.reverseProfit) {
-            return 1;
-        } else {
-            return -1;
+            return (x1 < x2 ? 1 : x1 > x2 ? -1 : 0);
         }
-    }
+    };
 
-    /**
-     * Геттеры и сеттеры для приввтных полей класса
-     * @return
-     */
-
-    public String getname() {
-        return name;
-    }
-
-    public String getway() {
-        return way;
-    }
-
-    public int getProfit() {
-        return profit;
-    }
-
-    public int getWayLength() {
-        return wayLength;
-    }
-
-    public int getFrom() {
-        return from;
-    }
-
-    public int getTo() {
-        return to;
-    }
 }
+
+
+
+

@@ -1,17 +1,19 @@
 package com.rida.behaviours;
 
 import com.rida.agents.DriverAgent;
-import jade.core.behaviours.Behaviour;
+import com.rida.tools.DriverDescription;
+import com.rida.tools.Trip;
 import jade.core.behaviours.OneShotBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.Property;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
-import sun.reflect.generics.reflectiveObjects.LazyReflectiveObjectGenerator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import jade.util.leap.ArrayList;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
-import java.sql.Driver;
+import java.util.Iterator;
 
 /**
  * Created by daine on 03.04.2016.
@@ -19,7 +21,7 @@ import java.sql.Driver;
 public class RegisterYellowPages extends OneShotBehaviour {
 
 
-    private static final Logger LOG = LoggerFactory.getLogger(RegisterYellowPages.class);
+//    private static final Logger LOG = LoggerFactory.getLogger(RegisterYellowPagesBehaviour.class);
 
     @Override
     public void action() {
@@ -28,14 +30,19 @@ public class RegisterYellowPages extends OneShotBehaviour {
         dfd.setName(driverAgent.getAID());
         ServiceDescription sd = new ServiceDescription();
         sd.setType("bring-up");
-        sd.setName(String.valueOf(driverAgent.getFrom()) + " " + String.valueOf(driverAgent.getTo()));
+        sd.setName(driverAgent.getName());
+        Trip trip = driverAgent.getDescription().getTrip();
+        sd.addProperties(new Property("from", trip.getFrom()));
+        sd.addProperties(new Property("to", trip.getTo()));
         dfd.addServices(sd);
         try {
             DFService.register(driverAgent, dfd);
         } catch (FIPAException fe) {
             fe.printStackTrace();
         }
-        LOG.info("I have been registered in Yellow Pages Service");
+//        LOG.info("register YP");
+        
+        System.out.println(myAgent.getLocalName() + " register YP");
     }
 
 }

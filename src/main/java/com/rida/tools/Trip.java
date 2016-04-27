@@ -1,17 +1,18 @@
 package com.rida.tools;
 
-import jade.core.AID;
-
 /**
+ * Класс описывающий поездук
  * Created by daine on 03.04.2016.
  */
 public class Trip {
-    private AID aid;
     private double cost;
+    private int from;
+    private int to;
 
-    public Trip(AID aid, double cost) {
-        this.aid = aid;
-        this.cost = cost;
+
+    public Trip(int from, int to) {
+        setFrom(from);
+        setTo(to);
     }
 
 
@@ -23,7 +24,32 @@ public class Trip {
         this.cost = cost;
     }
 
-    public AID getAid() {
-        return aid;
+
+    public int getFrom() {
+        return from;
+    }
+
+    public void setFrom(int from) {
+        this.from = from;
+    }
+
+    public int getTo() {
+        return to;
+    }
+
+    public void setTo(int to) {
+        this.to = to;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("From %d To %d by %1.2f€", from, to, cost);
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        Trip t =  new Trip(this.from, this.to);
+        t.setCost(this.cost);
+        return t;
     }
 }
