@@ -12,12 +12,14 @@ import jade.lang.acl.ACLMessage;
 //import org.slf4j.Logger;
 //import org.slf4j.LoggerFactory;
 import jade.lang.acl.MessageTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 
 public class ServerChauffeurBehaviour extends TickerBehaviour {
-
+    private static final Logger LOG = LoggerFactory.getLogger(ServerChauffeurBehaviour.class);
     private static final long serialVersionUID = -5461756253835984225L;
     private DriverAgent driverAgent;
     private boolean waitForAgree = false;
@@ -123,14 +125,15 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
 
             boolean flag = driverAgent.addPotentialPassengerByName(driverAID);
             if (flag)
-                System.out.println(myAgent.getLocalName() + ": i(chauffeur) add new potential passenger - " +
+                LOG.info(": i(chauffeur) add new potential passenger - " +
                         msg.getSender().getLocalName());
         }
     }
 
 
     private void checkAndRemovePotentialPassengers() {
-        for (AID aid : driverAgent.goneDrivers) {
+        Set<AID> goneDrivers = driverAgent.getGoneDrivers();
+        for (AID aid : goneDrivers) {
             for (DriverDescription dd : driverAgent.getPotentialPassengers()) {
                 if (dd.getAid().getName().equals(aid.getName())) {
                     driverAgent.removePotentialPassenger(aid);
@@ -211,7 +214,7 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
                 break;
 
             if (msg.getPerformative() == ACLMessage.INFORM && msg.getConversationId().equals("i'm gone")) {
-                driverAgent.goneDrivers.add(msg.getSender());
+                driverAgent.addGoneDriver(msg.getSender());
             }
 
             boolean flag = driverAgent.removePotentialPassenger(msg.getSender());
@@ -285,7 +288,7 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
         for (DriverDescription dd : driverAgent.getDrivers()) {
             if (!passengersForConfirm.contains(dd.getAid()) && !dd.getAid().getLocalName().equals(myAgent.getAID().getLocalName())) {
                 msgInfo.addReceiver(dd.getAid());
-                System.out.println(myAgent.getLocalName() + ": i(chauffeur) notificate that i gone " + dd.getAid().getLocalName());
+                LOG.info(": i(chauffeur) notificate that i gone " + dd.getAid().getLocalName());
             }
         }
         driverAgent.send(msgInfo);

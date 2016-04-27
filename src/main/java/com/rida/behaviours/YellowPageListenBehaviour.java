@@ -43,10 +43,12 @@ public class YellowPageListenBehaviour extends WakerBehaviour {
 
             for (DFAgentDescription result : yellowPageResults) {
                 DriverDescription driverDescription = parseDriverDescription(result);
-                driverAgent.addDriver(driverDescription);
-                LOG.info(" Got Yellow page Service from " +
-                        driverDescription.getName() +
-                        " with trip " + driverDescription.getTrip());
+                if (!driverAgent.getDescription().equals(driverDescription)) {
+                    driverAgent.addDriver(driverDescription);
+                    LOG.info(" Got Yellow page Service from " +
+                            driverDescription.getName() +
+                            " with trip " + driverDescription.getTrip());
+                }
             }
 
         } catch (FIPAException e) {
@@ -57,17 +59,14 @@ public class YellowPageListenBehaviour extends WakerBehaviour {
 
     private DriverDescription parseDriverDescription(DFAgentDescription result) {
         DriverDescription driverDescription = null;
-        boolean isNotMe = !myAgent.getAID().equals(result.getName());
-        if (isNotMe) {
 
-            Iterator iter = result.getAllServices();
-            while (iter.hasNext()) {
-                ServiceDescription s = (ServiceDescription) iter.next();
-                Iterator properties = s.getAllProperties();
-                Trip trip = parseTrip(properties);
-                driverDescription = new DriverDescription(s.getName(),
-                        result.getName(), trip);
-            }
+        Iterator iter = result.getAllServices();
+        while (iter.hasNext()) {
+            ServiceDescription s = (ServiceDescription) iter.next();
+            Iterator properties = s.getAllProperties();
+            Trip trip = parseTrip(properties);
+            driverDescription = new DriverDescription(s.getName(),
+                    result.getName(), trip);
         }
         return driverDescription;
     }

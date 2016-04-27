@@ -157,7 +157,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             } else {
                 newMsg.setContent(String.valueOf(newCost));
                 newMsg.setPerformative(ACLMessage.CFP);
-                System.out.println(driverAgent.getLocalName() + ": new cost(" + newCost + ") for chauffeur " +
+                LOG.info(" new cost(" + newCost + ") for chauffeur " +
                         msg.getSender().getLocalName());
             }
             driverAgent.send(newMsg);
@@ -184,7 +184,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
             boolean flag = driverAgent.addPotentialPassengerByName(driverAID);
             if (flag) {
-                LOG.info(": i(passenger) add new potential passenger - " +
+                LOG.info(" i(passenger) add new potential passenger - " +
                         msg.getSender().getLocalName());
                 currentCost = Double.parseDouble(msg.getContent());
                 driverAgent.setCostToPotentialPassenger(driverAID, currentCost);
@@ -327,7 +327,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
             waitForConfirm = false;
             expectedChauffeur = null;
-            System.out.println(driverAgent.getLocalName() + ": i've handled disconfirm from chauffeur " +
+            LOG.info(" i've handled disconfirm from chauffeur " +
                     msg.getSender().getLocalName());
             return;
         }
@@ -349,7 +349,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
             LOG.info(" i've(passenger) got msg about leaving " +
                     msg.getSender().getLocalName());
-            driverAgent.goneDrivers.add(msg.getSender());
+            driverAgent.addGoneDriver(msg.getSender());
 
             driverAgent.removePotentialPassenger(msg.getSender());
             for (DriverDescription dd : potentialChauffeurs) {

@@ -22,17 +22,27 @@ public class DriverAgent extends Agent {
 
     private static final Logger LOG = LoggerFactory.getLogger(DriverAgent.class);
     private static final long serialVersionUID = 7075582068677079540L;
+    private static final int CAR_CAPACITY = 4;
+
 
     private transient DriverDescription description = null;
     private Graph mapGraph = null;
     private transient Set<DriverDescription> drivers = null;
     private transient Set<DriverDescription> potentialDrivers = null;
+    private transient Set<AID> goneDrivers = null;
 
 
     private ArrayList<DriverDescription> potentialPassengers = new ArrayList<>();
     private boolean isChauffeurFlag = false;
-    private transient Set<AID> goneDrivers = null;
-    private static final int CAR_CAPACITY = 4;
+
+    public Set<AID> getGoneDrivers() {
+        return goneDrivers;
+    }
+
+    public void addGoneDriver(AID aid) {
+        goneDrivers.add(aid);
+    }
+
 
 
     @Override
@@ -48,6 +58,7 @@ public class DriverAgent extends Agent {
                 " to " + to);
         drivers = new HashSet<>();
         potentialDrivers = new HashSet<>();
+        goneDrivers = new HashSet<>();
         SequentialBehaviour sequentialBehaviour = new SequentialBehaviour();
         sequentialBehaviour.addSubBehaviour(new RegisterYellowPagesBehaviour());
         sequentialBehaviour.addSubBehaviour(new YellowPageListenBehaviour(this, 1000));
