@@ -4,7 +4,6 @@ import com.rida.agents.DriverAgent;
 import com.rida.tools.DriverDescription;
 import com.rida.tools.Trip;
 import jade.core.Agent;
-import jade.core.behaviours.OneShotBehaviour;
 import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
@@ -13,17 +12,17 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
+import jade.util.leap.Iterator;
+
 
 /**
- * Created by daine on 03.04.2016.
+ * Поведение считывающее информацию с сервиса желтых страниц
  */
 public class YellowPageListenBehaviour extends WakerBehaviour {
 
     private static final Logger LOG = LoggerFactory.getLogger(YellowPageListenBehaviour.class);
+    private static final long serialVersionUID = -3203854470448955284L;
 
     public YellowPageListenBehaviour(Agent a, long timeout) {
         super(a, timeout);
@@ -39,36 +38,45 @@ public class YellowPageListenBehaviour extends WakerBehaviour {
         template.addServices(sd);
 
         try {
-            DFAgentDescription[] YellowPageResults = DFService.search(myAgent, template);
+            DFAgentDescription[] yellowPageResults;
+            yellowPageResults = DFService.search(myAgent, template);
 
-            for (DFAgentDescription result : YellowPageResults) {
-
-                boolean isNotMe = !myAgent.getAID().equals(result.getName());
-                if (isNotMe) {
-                    Iterator<ServiceDescription> iter = result.getAllServices();
-                    while (iter.hasNext()) {
-                        ServiceDescription s = iter.next();
-                        Trip trip = parseTrip(s.getAllProperties());
-                        DriverDescription driverDescription = new DriverDescription(s.getName(),
-                                result.getName(), trip);
-                        driverAgent.addDriver(driverDescription);
-                        System.out.println(myAgent.getLocalName() + " Got Yellow page Service from " +
-                                driverDescription.getName().split("@")[0] +
-                                " with trip " + driverDescription.getTrip());
-                    }
-                }
+            for (DFAgentDescription result : yellowPageResults) {
+                DriverDescription driverDescription = parseDriverDescription(result);
+                driverAgent.addDriver(driverDescription);
+                LOG.info(" Got Yellow page Service from " +
+                        driverDescription.getName() +
+                        " with trip " + driverDescription.getTrip());
             }
 
         } catch (FIPAException e) {
-            e.printStackTrace();
+            LOG.error("Error in FIPA Protocol", e);
         }
 
     }
 
-    private Trip parseTrip(Iterator<Property> properties) {
-        int from = 0, to = 0;
+    private DriverDescription parseDriverDescription(DFAgentDescription result) {
+        DriverDescription driverDescription = null;
+        boolean isNotMe = !myAgent.getAID().equals(result.getName());
+        if (isNotMe) {
+
+            Iterator iter = result.getAllServices();
+            while (iter.hasNext()) {
+                ServiceDescription s = (ServiceDescription) iter.next();
+                Iterator properties = s.getAllProperties();
+                Trip trip = parseTrip(properties);
+                driverDescription = new DriverDescription(s.getName(),
+                        result.getName(), trip);
+            }
+        }
+        return driverDescription;
+    }
+
+    private Trip parseTrip(Iterator properties) {
+        int from = 0;
+        int to = 0;
         while (properties.hasNext()) {
-            Property property = properties.next();
+            Property property = (Property) properties.next();
             Object o = property.getValue();
             String propertyName = property.getName();
             switch (propertyName) {

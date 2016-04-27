@@ -1,22 +1,20 @@
 package com.rida.tools;
 
-import java.util.Comparator;
 
 import jade.core.AID;
+
+import java.io.Serializable;
 
 /**
  * Описывает водителя
  * Created by daine on 04.04.2016.
  */
-public class DriverDescription {
-    private Trip trip;
+public class DriverDescription implements Comparable<DriverDescription>, Serializable {
+    private static final long serialVersionUID = -3554852054925105341L;
+    private transient Trip trip;
     private String name;
     private AID aid;
 
-
-    public String getName() {
-        return name;
-    }
 
     public DriverDescription(String name, AID aid, Trip trip) {
         this.trip = trip;
@@ -24,24 +22,11 @@ public class DriverDescription {
         this.aid = aid;
     }
 
-    public DriverDescription(DriverDescription dd) {
-        this.aid = dd.getAid();
-        try {
-            this.trip = (Trip) dd.getTrip().clone();
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-        }
-        this.name = dd.getName();
+
+    public AID getAid() {
+        return aid;
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        DriverDescription t = (DriverDescription) obj;
-        if (this.name.equals(getName()))
-            return true;
-        else
-            return false;
-    }
 
     public void setCost(double cost) {
         trip.setCost(cost);
@@ -51,29 +36,42 @@ public class DriverDescription {
         return trip;
     }
 
-    public void setTrip(Trip trip) {
-        this.trip = trip;
-    }
-
-    public AID getAid() {
-        return aid;
+    public String getName() {
+        return name;
     }
 
     @Override
     public String toString() {
-        return (name.toString().split("@")[0] + " " + trip);
+        return name + " " + trip;
     }
 
-    public static Comparator<DriverDescription> costComp = new Comparator<DriverDescription>() {
 
-        public int compare(DriverDescription dd1, DriverDescription dd2) {
-            double x1 = dd1.getTrip().getCost();
-            double x2 = dd2.getTrip().getCost();
+    @Override
+    public int hashCode() {
+        return aid.hashCode();
+    }
 
-            return (x1 < x2 ? 1 : x1 > x2 ? -1 : 0);
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
         }
-    };
 
+        if (this.getClass() != obj.getClass()) {
+            return false;
+        }
+        DriverDescription driverDescription = (DriverDescription) obj;
+        return this.aid.equals(driverDescription.getAid());
+    }
+
+
+
+    @Override
+    public int compareTo(DriverDescription o) {
+        double cost1 = this.getTrip().getCost();
+        double cost2 = o.getTrip().getCost();
+        return cost1 < cost2 ? 1 : cost1 > cost2 ? -1 : 0;
+    }
 }
 
 

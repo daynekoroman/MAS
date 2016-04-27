@@ -21,19 +21,18 @@ import java.util.*;
 public class DriverAgent extends Agent {
 
     private static final Logger LOG = LoggerFactory.getLogger(DriverAgent.class);
-    private DriverDescription description;
-    private Graph mapGraph;
-    private Set<DriverDescription> drivers;
-    private Set<DriverDescription> potentialDrivers;
-    private Set<DriverDescription> passengers;
-    private Set<DriverDescription> bestPassengers;
-    private int potentialPassengerCount = 0;
+    private static final long serialVersionUID = 7075582068677079540L;
+
+    private transient DriverDescription description = null;
+    private Graph mapGraph = null;
+    private transient Set<DriverDescription> drivers = null;
+    private transient Set<DriverDescription> potentialDrivers = null;
 
 
     private ArrayList<DriverDescription> potentialPassengers = new ArrayList<>();
     private boolean isChauffeurFlag = false;
-    public HashSet<AID> goneDrivers = new HashSet<>();
-    public final int CAR_CAPACITY = 4;
+    private transient Set<AID> goneDrivers = null;
+    private static final int CAR_CAPACITY = 4;
 
 
     @Override
@@ -45,11 +44,10 @@ public class DriverAgent extends Agent {
         int to = Integer.parseInt(args[2].toString());
         Trip trip = new Trip(from, to);
         description = new DriverDescription(this.getName(), this.getAID(), trip);
-        System.out.println(new Date() + " DriverAgent created. I want to go from " + from +
+        LOG.info(" DriverAgent created. I want to go from " + from +
                 " to " + to);
         drivers = new HashSet<>();
         potentialDrivers = new HashSet<>();
-        passengers = new HashSet<>();
         SequentialBehaviour sequentialBehaviour = new SequentialBehaviour();
         sequentialBehaviour.addSubBehaviour(new RegisterYellowPagesBehaviour());
         sequentialBehaviour.addSubBehaviour(new YellowPageListenBehaviour(this, 1000));
@@ -64,41 +62,10 @@ public class DriverAgent extends Agent {
         return drivers;
     }
 
-    //    public DriverDescription getDriverDescriptionByName(AID aid) {
-//        for (DriverDescription dd : drivers) {
-//            if (dd.getAid().toString().equals(aid.toString())) {
-//                return dd;
-//            }
-//        }
-//        throw new IllegalStateException("Not found driver");
-//    }
-//
-//    public DriverDescription getPaseengerDescriptionByName(AID aid) {
-//        for (DriverDescription dd : passengers) {
-//            if (dd.getAid().toString().equals(aid.toString())) {
-//                return dd;
-//            }
-//        }
-//        throw new IllegalStateException("Not found passenger");
-//    }
-//
     public void addDriver(DriverDescription driverDescription) {
         drivers.add(driverDescription);
     }
-//
-//    public void addPassenger(DriverDescription ds) {
-//        passengers.add(ds);
-//    }
 
-
-//    public Set<DriverDescription> getPassengers() {
-//        return new HashSet<>(passengers);
-//
-//    }
-
-//    public Set<DriverDescription> getPotentialDrivers() {
-//        return potentialDrivers;
-//    }
 
     public Set<DriverDescription> getGoodTrips() {
         Set<DriverDescription> set = new HashSet<>();
@@ -115,24 +82,10 @@ public class DriverAgent extends Agent {
                 set.add(driver);
                 potentialDrivers.add(driver);
             }
-            if (reverseProfit > 0 && reverseProfit >= profit) {
-                potentialPassengerCount++;
-            }
         }
         return set;
     }
 
-    /*
-    public int calcAmountPotentialPassengers() {
-        int count = 0;
-        for (DriverDescription descr : drivers) {
-            if (descr.getReverseProfit() > 0 && descr.getReverseProfit() <= descr.getProfit()) {
-                count++;
-            }
-        }
-
-        return count;
-    }*/
     public DriverDescription getDescription() {
         return description;
     }
@@ -141,23 +94,7 @@ public class DriverAgent extends Agent {
         return mapGraph;
     }
 
-//    public void deletePotentialDriver(DriverDescription dd){
-//        potentialDrivers.remove(dd);
-//    }
-//
-//    public void deletePassenger(DriverDescription dd){
-//        passengers.remove(dd);
-//    }
-
-    public void setBestPassengers(Set<DriverDescription> bestPassengers) {
-        this.bestPassengers = bestPassengers;
-    }
-
-    public Set<DriverDescription> getBestPassengers() {
-        return bestPassengers;
-    }
-
-    public boolean havePotentialPassenger(AID aid) {
+    private boolean havePotentialPassenger(AID aid) {
         for (DriverDescription dd : potentialPassengers) {
             if (dd.getName().equals(aid.getName())) {
                 return true;
@@ -195,9 +132,7 @@ public class DriverAgent extends Agent {
                 return true;
             }
         }
-
         return false;
-//    	throw new IllegalStateException("not found potential passenger while removing");
     }
 
 
@@ -224,8 +159,7 @@ public class DriverAgent extends Agent {
 
 
     public void sortPotentialPassengersByCost() {
-
-        Collections.sort(potentialPassengers, DriverDescription.costComp);
+        Collections.sort(potentialPassengers);
     }
 
 
@@ -239,16 +173,13 @@ public class DriverAgent extends Agent {
     }
 
 
-    public ArrayList<DriverDescription> getPotentialPassengers() {
+    public List<DriverDescription> getPotentialPassengers() {
         return potentialPassengers;
     }
 
 
-    public HashSet<DriverDescription> getSetPotentialPassengers() {
+    public Set<DriverDescription> getSetPotentialPassengers() {
         return new HashSet<>(potentialPassengers);
     }
 
-//    public int getPotentialPassengerCount() {
-//        return potentialPassengerCount;
-//    }
 }
