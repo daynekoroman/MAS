@@ -105,40 +105,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
         ACLMessage msg;
 
         while ((msg = myAgent.receive(mt)) != null) {
-            if (costsForChauffers.get(msg.getSender().getName()) == null)
-                continue;
-
-            ACLMessage newMsg = msg.createReply();
-            double newCost = Double.parseDouble(msg.getContent());
-            newCost *= Consts.PASSANGER_COEF_NEW_COST;
-
-            if (newCost > Consts.PASSANGER_COEF_LIMIT * costsForChauffers.get(msg.getSender().getName())) {
-                newMsg.setContent("Too expensive");
-                newMsg.setPerformative(ACLMessage.REFUSE);
-                removePotentialChauffeur(msg.getSender());
-                if (!costsForChauffers.containsKey(msg.getSender().getName())) {
-                    throw new IllegalStateException("got refuse from unknown chauffeur");
-                }
-                costsForChauffers.remove(msg.getSender().getName());
-                LOG.info(" refuse because this guy - " +
-                        msg.getSender().getLocalName() + " too expensive");
-
-                if (potentialChauffeurs.isEmpty()) {
-                    if (waitForConfirm)
-                        throw new IllegalStateException("try to become chauffeur while waiting confirm");
-
-                    becomeChaufferAndInformAll();
-                    LOG.info(" chauffeur because other chauffeurs are too expensive or rejected my proposal");
-                    return;
-                }
-
-            } else {
-                newMsg.setContent(String.valueOf(newCost));
-                newMsg.setPerformative(ACLMessage.CFP);
-                LOG.info(" new cost(" + newCost + ") for chauffeur " +
-                        msg.getSender().getLocalName());
-            }
-            driverAgent.send(newMsg);
+            replyOnRequestFromPotentionalPassanger(msg);
         }
 
     }
@@ -313,31 +280,70 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
         ACLMessage msg;
         while ((msg = myAgent.receive(mt)) != null) {
-            LOG.info(" i've(passenger) got msg about leaving " +
-                    msg.getSender().getLocalName());
-            driverAgent.addGoneDriver(msg.getSender());
-
-            driverAgent.removePotentialPassenger(msg.getSender());
-            for (DriverDescription dd : potentialChauffeurs) {
-                if (dd.getName().equals(msg.getSender().getName())) {
-                    potentialChauffeurs.remove(dd);
-                    break;
-                }
-            }
-            costsForChauffers.remove(msg.getSender().getName());
-            if (!driverAgent.isChauffeur() && potentialChauffeurs.isEmpty()) {
-                if (waitForConfirm)
-                    throw new IllegalStateException("try to become chauffeur while waiting confirm");
-
-                becomeChaufferAndInformAll();
-                LOG.info(" chauffeur because all guys leaving");
-                return;
-            }
-
+            replyOnMessgaeAboutLeaving(msg);
         }
 
     }
 
+    private void replyOnMessgaeAboutLeaving(ACLMessage message) {
+        LOG.info(" i've(passenger) got message about leaving " +
+                message.getSender().getLocalName());
+        driverAgent.addGoneDriver(message.getSender());
+
+        driverAgent.removePotentialPassenger(message.getSender());
+        for (DriverDescription dd : potentialChauffeurs) {
+            if (dd.getName().equals(message.getSender().getName())) {
+                potentialChauffeurs.remove(dd);
+                break;
+            }
+        }
+        costsForChauffers.remove(message.getSender().getName());
+        if (!driverAgent.isChauffeur() && potentialChauffeurs.isEmpty()) {
+            if (waitForConfirm)
+                throw new IllegalStateException("try to become chauffeur while waiting confirm");
+
+            becomeChaufferAndInformAll();
+            LOG.info(" chauffeur because all guys leaving");
+        }
+
+    }
+
+    private void replyOnRequestFromPotentionalPassanger(ACLMessage message) {
+        AID senderAID = message.getSender();
+        ACLMessage newMsg = message.createReply();
+        double newCost = Double.parseDouble(message.getContent());
+        newCost *= Consts.PASSANGER_COEF_NEW_COST;
+
+        if (costsForChauffers.get(senderAID.getName()) == null)
+            return;
+
+
+        if (newCost > Consts.PASSANGER_COEF_LIMIT * costsForChauffers.get(senderAID.getName())) {
+            newMsg.setContent("Too expensive");
+            newMsg.setPerformative(ACLMessage.REFUSE);
+            removePotentialChauffeur(senderAID);
+            if (!costsForChauffers.containsKey(senderAID.getName()) || (potentialChauffeurs.isEmpty() &&
+                    waitForConfirm)) {
+                throw new IllegalStateException();
+            }
+            costsForChauffers.remove(senderAID.getName());
+            LOG.info(" refuse because this guy - " +
+                    senderAID.getLocalName() + " too expensive");
+
+            if (potentialChauffeurs.isEmpty()) {
+                becomeChaufferAndInformAll();
+                LOG.info(" chauffeur because other chauffeurs are too expensive or rejected my proposal");
+                return;
+            }
+
+        } else {
+            newMsg.setContent(String.valueOf(newCost));
+            newMsg.setPerformative(ACLMessage.CFP);
+            LOG.info(" new cost(" + newCost + ") for chauffeur " +
+                    senderAID.getLocalName());
+        }
+        driverAgent.send(newMsg);
+    }
 
     @Override
     public void onTick() {
