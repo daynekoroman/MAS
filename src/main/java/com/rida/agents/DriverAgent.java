@@ -26,7 +26,7 @@ public class DriverAgent extends Agent {
 
 
     private transient DriverDescription description = null;
-    private Graph mapGraph = null;
+    private transient Graph mapGraph = null;
     private transient Set<DriverDescription> drivers = null;
     private transient Set<DriverDescription> potentialDrivers = null;
     private transient Set<AID> goneDrivers = null;

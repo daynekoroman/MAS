@@ -1,16 +1,12 @@
 package com.rida.behaviours;
 
 import com.rida.agents.DriverAgent;
-import com.rida.tools.DriverDescription;
-import com.rida.tools.Graph;
-import com.rida.tools.SubsetGenerator;
+import com.rida.tools.*;
 
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
 import jade.lang.acl.MessageTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +38,7 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
         for (Set<DriverDescription> passengerCombination : passengerCombinations) {
             int size = passengerCombination.size();
             if (size > 0 && size <= 4) {
-                int profit = getMaxProfit(passengerCombination);
+                int profit = Helper.calcBestSetProfit(passengerCombination, driverAgent.getMapGraph(), driverAgent.getDescription().getTrip());
                 if (maxProfit < profit) {
                     maxProfit = profit;
                     bestPassengeres = passengerCombination;
@@ -52,70 +48,10 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
         return bestPassengeres;
     }
 
-
-    private int getMaxProfit(Set<DriverDescription> cont) {
-        //DriverAgent driverAgent = (DriverAgent) myAgent;
-        Graph g = driverAgent.getMapGraph();
-
-        Set<Integer> vert = new HashSet<>();
-        Map<Integer, Boolean> end = new HashMap<Integer, Boolean>();
-        for (DriverDescription dd : cont) {
-            vert.add(dd.getTrip().getFrom());
-        }
-
-        int cur = 0;
-        int sum = 0;
-        int min = Integer.MAX_VALUE;
-        for (Integer t : vert) {
-            if (min > g.bfs(driverAgent.getDescription().getTrip().getFrom(), t)) {
-                min = g.bfs(driverAgent.getDescription().getTrip().getFrom(), t);
-                cur = t;
-            }
-        }
-
-        vert.remove(cur);
-        sum += min;
-        end.put(cur, true);
-        for (DriverDescription dd : cont) {
-            if (dd.getTrip().getFrom() == cur)
-                vert.add(dd.getTrip().getTo());
-        }
-
-        while (vert.size() > 1) {
-            min = Integer.MAX_VALUE;
-            int curcur = 0;
-            for (Integer t : vert) {
-                if (min > g.bfs(cur, t)) {
-                    min = g.bfs(cur, t);
-                    curcur = t;
-                }
-            }
-            vert.remove(curcur);
-            sum += min;
-            cur = curcur;
-            for (DriverDescription dd : cont) {
-                if (dd.getTrip().getFrom() == cur)
-                    vert.add(dd.getTrip().getTo());
-            }
-            end.put(cur, true);
-        }
-        sum += g.bfs(cur, driverAgent.getDescription().getTrip().getTo());
-
-        int maxway = 0;
-        for (DriverDescription dd : cont) {
-            maxway += g.bfs(dd.getTrip().getFrom(), dd.getTrip().getTo());
-        }
-        maxway += g.bfs(driverAgent.getDescription().getTrip().getFrom(), driverAgent.getDescription().getTrip().getTo());
-
-        return maxway - sum;
-    }
-
-
     private void receiveRequestsFromPassengers() {
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CFP),
-                MessageTemplate.MatchConversationId("bring-up"));
-        ACLMessage msg = null;
-        double currentCost = 0;
+                MessageTemplate.MatchConversationId(Consts.BRINGUP_ID));
+        ACLMessage msg;
 
         while (true) {
             msg = myAgent.receive(mt);
@@ -125,7 +61,7 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
 
             boolean flag = driverAgent.addPotentialPassengerByName(driverAID);
             if (flag)
-                LOG.info(": i(chauffeur) add new potential passenger - " +
+                LOG.info(" i(chauffeur) add new potential passenger - " +
                         msg.getSender().getLocalName());
         }
     }
@@ -155,19 +91,19 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
             return;
         }
         ACLMessage msg = new ACLMessage(ACLMessage.ACCEPT_PROPOSAL);
-        msg.setConversationId("bring-up");
+        msg.setConversationId(Consts.BRINGUP_ID);
 
         Set<DriverDescription> bestPassengers = getBestPassengers(driverAgent.getSetPotentialPassengers());
-        String info = myAgent.getLocalName() + ": my(chauffeur) potential passengers:\n";
+        String info = myAgent.getLocalName() + " my(chauffeur) potential passengers:\n";
         for (DriverDescription dd : driverAgent.getSetPotentialPassengers()) {
             info += "\t\t" + dd.getAid().getLocalName() + "\n";
         }
-        System.out.println(info);
+        LOG.info(info);
 
         for (DriverDescription dd : bestPassengers) {
             msg.addReceiver(dd.getAid());
             expectedPassengers.add(dd.getAid());
-            System.out.println(driverAgent.getLocalName() + ": i send accept to " + dd.getAid().getLocalName());
+            LOG.info(" i send accept to " + dd.getAid().getLocalName());
         }
         driverAgent.send(msg);
         waitForAgree = true;
@@ -180,16 +116,12 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
 
         ACLMessage msg;
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(
-                ACLMessage.AGREE), MessageTemplate.MatchConversationId("bring-up"));
-        while (true) {
-            msg = myAgent.receive(mt);
-            if (msg == null)
-                break;
-
+                ACLMessage.AGREE), MessageTemplate.MatchConversationId(Consts.BRINGUP_ID));
+        while ((msg = myAgent.receive(mt)) != null) {
             if (!expectedPassengers.contains(msg.getSender()))
                 continue;
 
-            System.out.println(driverAgent.getLocalName() + ": yeaah, this guy(" +
+            LOG.info(" yeaah, this guy(" +
                     msg.getSender().getLocalName() + ") agree to go with me");
             expectedPassengers.remove(msg.getSender());
             passengersForConfirm.add(msg.getSender());
@@ -208,41 +140,36 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
         MessageTemplate mt = MessageTemplate.or(MessageTemplate.MatchPerformative(
                 ACLMessage.REFUSE), MessageTemplate.MatchPerformative(ACLMessage.INFORM));
 
-        while (true) {
-            msg = myAgent.receive(mt);
-            if (msg == null)
-                break;
-
-            if (msg.getPerformative() == ACLMessage.INFORM && msg.getConversationId().equals("i'm gone")) {
+        while ((msg = myAgent.receive(mt)) != null) {
+            AID senderAID = msg.getSender();
+            if (msg.getPerformative() == ACLMessage.INFORM && msg.getConversationId().equals(Consts.IMGONE_ID)) {
                 driverAgent.addGoneDriver(msg.getSender());
             }
 
-            boolean flag = driverAgent.removePotentialPassenger(msg.getSender());
-            if (flag)
-                System.out.println(driverAgent.getLocalName() + ": success remove potential passenger - " +
-                        msg.getSender().getLocalName());
-            else
-                System.out.println(driverAgent.getLocalName() + ": fail to remove potential passenger - " +
-                        msg.getSender().getLocalName());
+            if (driverAgent.removePotentialPassenger(senderAID)) {
+                LOG.info(" success remove potential passenger - " +
+                        senderAID.getLocalName());
+            } else {
+                LOG.info(" fail to remove potential passenger - " +
+                        senderAID.getLocalName());
+            }
 
-            String info = myAgent.getLocalName() + ": my potential passengers after removing:\n";
+            String info = myAgent.getLocalName() + " my potential passengers after removing:\n";
             for (DriverDescription dd : driverAgent.getSetPotentialPassengers())
                 info += "\t\t" + dd.getAid().getLocalName() + "\n";
 
-            System.out.println(info);
+            LOG.info(info);
 
-            if (waitForAgree) {
-                if (expectedPassengers.contains(msg.getSender())) {
-                    waitForAgree = false;
-                    expectedPassengers.remove(msg.getSender());
-                    passengersForConfirm.addAll(expectedPassengers);
-                    expectedPassengers.clear();
+            if (waitForAgree && expectedPassengers.contains(msg.getSender())) {
+                waitForAgree = false;
+                expectedPassengers.remove(msg.getSender());
+                passengersForConfirm.addAll(expectedPassengers);
+                expectedPassengers.clear();
 
-                    informAboutDisconfirm();
-                    System.out.println(driverAgent.getLocalName() + ": this guy(" +
-                            msg.getSender().getLocalName() + ") don't agree go with me");
-                    System.out.println(driverAgent.getLocalName() + ": go to begin");
-                }
+                informAboutDisconfirm();
+                LOG.info(" this guy(" +
+                        msg.getSender().getLocalName() + ") don't agree go with me");
+                LOG.info(" go to begin");
             }
         }
 
@@ -259,11 +186,11 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
 
     private void informAboutDisconfirm() {
         ACLMessage msg = new ACLMessage(ACLMessage.DISCONFIRM);
-        msg.setConversationId("bring-up");
+        msg.setConversationId(Consts.BRINGUP_ID);
 
         for (AID dd : passengersForConfirm) {
             msg.addReceiver(dd);
-            System.out.println(driverAgent.getLocalName() + ": disconfirm to " + dd.getLocalName());
+            LOG.info(" disconfirm to " + dd.getLocalName());
         }
         driverAgent.send(msg);
         passengersForConfirm.clear();
@@ -272,23 +199,24 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
 
     private void goneAndInformAll() {
         ACLMessage msg = new ACLMessage(ACLMessage.CONFIRM);
-        msg.setConversationId("bring-up");
+        msg.setConversationId(Consts.BRINGUP_ID);
 
-        String info = driverAgent.getLocalName() + ": i'm gone like chauffeur with:\n";
+        String info = driverAgent.getLocalName() + " i'm gone like chauffeur with:\n";
         for (AID aid : passengersForConfirm) {
             msg.addReceiver(aid);
             info += "\t\t" + aid.getLocalName() + "\n";
         }
 
         driverAgent.send(msg);
-        System.out.println(info);
+        LOG.info(info);
 
         ACLMessage msgInfo = new ACLMessage(ACLMessage.INFORM);
-        msgInfo.setConversationId("i'm gone");
+        msgInfo.setConversationId(Consts.IMGONE_ID);
         for (DriverDescription dd : driverAgent.getDrivers()) {
-            if (!passengersForConfirm.contains(dd.getAid()) && !dd.getAid().getLocalName().equals(myAgent.getAID().getLocalName())) {
-                msgInfo.addReceiver(dd.getAid());
-                LOG.info(": i(chauffeur) notificate that i gone " + dd.getAid().getLocalName());
+            AID currentAID = dd.getAid();
+            if (!passengersForConfirm.contains(currentAID) && !currentAID.equals(myAgent.getAID())) {
+                msgInfo.addReceiver(currentAID);
+                LOG.info(" i(chauffeur) notificate that i gone " + currentAID.getLocalName());
             }
         }
         driverAgent.send(msgInfo);
@@ -300,8 +228,6 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
         driverAgent = (DriverAgent) myAgent;
         if (!driverAgent.isChauffeur())
             return;
-
-
         receiveRequestsFromPassengers();
         handleOtherBadNewsFromPassengers();
         handleAgreeExpectedPassengers();

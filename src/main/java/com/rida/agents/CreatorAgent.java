@@ -26,7 +26,7 @@ public class CreatorAgent extends Agent {
 
     private static final Logger LOG = LoggerFactory.getLogger(CreatorAgent.class);
     private static final long serialVersionUID = 6383145659245328051L;
-    private Graph mapGraph = null;
+    private transient Graph mapGraph = null;
 
     private Graph getGraphFromFile(String fileName) throws IOException {
         ClassLoader classLoader = getClass().getClassLoader();
