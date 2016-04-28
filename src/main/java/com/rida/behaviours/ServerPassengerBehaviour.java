@@ -1,6 +1,7 @@
 package com.rida.behaviours;
 
 import com.rida.agents.DriverAgent;
+import com.rida.tools.Consts;
 import com.rida.tools.DriverDescription;
 import jade.core.AID;
 import jade.core.Agent;
@@ -11,8 +12,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
-
+/**
+ * Поведение пассажира
+ */
 public class ServerPassengerBehaviour extends TickerBehaviour {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServerPassengerBehaviour.class);
@@ -20,9 +24,6 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
     private DriverAgent driverAgent;
     private boolean sendedRequests = false;
     private double bestCost = Double.NEGATIVE_INFINITY;
-    private final double chaufferCoefficientLimit = 3.456;
-    private final double passengerCoefficientNewCost = 1.2;
-    private final double passengerCoefficientLimit = 2.0736;
     private HashMap<String, Double> costsForChauffers = new HashMap<>();
     private Set<DriverDescription> potentialChauffeurs = new HashSet<>();
     private boolean waitForConfirm = false;
@@ -37,21 +38,12 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
     private void becomeChaufferAndInformAll() {
         driverAgent.becomeChauffeur();
         LOG.info("chauffeur now!");
-
-        ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
-        msg.setConversationId("i'm chauffeur");
-        for (DriverDescription dd : potentialChauffeurs) {
-            msg.addReceiver(dd.getAid());
-            LOG.info(" inform about new chauffeur other potential chauffeur - " + dd.getAid().getLocalName());
-        }
-        for (DriverDescription dd : driverAgent.getPotentialPassengers()) {
-            msg.addReceiver(dd.getAid());
-            LOG.info("inform about new chauffeur other potential passenger - " + dd.getAid().getLocalName());
-        }
-        driverAgent.send(msg);
+        sendMessage(null, ACLMessage.INFORM, Consts.IMCHAUFFER_ID, potentialChauffeurs);
+        LOG.info(" inform about new chauffeur other potential chauffeurs");
+        sendMessage(null, ACLMessage.INFORM, Consts.IMCHAUFFER_ID, driverAgent.getSetPotentialPassengers());
+        LOG.info("inform about new chauffeur gother potential passengers");
         potentialChauffeurs.clear();
         costsForChauffers.clear();
-
         if (waitForConfirm)
             throw new IllegalStateException("WHAAAAAAAAAAT!!");
     }
@@ -74,7 +66,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
         double maxProfitIfChauffeur = driverAgent.getSumCostPotentialPassenger();
 
-        return (maxProfitIfChauffeur > chaufferCoefficientLimit * bestCost);
+        return maxProfitIfChauffeur > Consts.CHAUFFER_COEF_LIMIT * bestCost;
     }
 
 
@@ -82,13 +74,13 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
         sendedRequests = true;
 
         potentialChauffeurs = driverAgent.getGoodTrips();
-        if (potentialChauffeurs.size() == 0) {
+        if (potentialChauffeurs.isEmpty()) {
             becomeChaufferAndInformAll();
             LOG.info("chauffeur because there is no one good driver");
             return;
         }
 
-        double currentCost = 0;
+        double currentCost;
         for (DriverDescription driver : potentialChauffeurs) {
             ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
             cfp.addReceiver(driver.getAid());
@@ -96,10 +88,9 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             LOG.info(" send a message to " +
                     driver.getAid().getLocalName() + "  with cost " + currentCost);
             cfp.setContent(String.valueOf(currentCost));
-            cfp.setConversationId("bring-up");
+            cfp.setConversationId(Consts.BRINGUP_ID);
             driverAgent.send(cfp);
             costsForChauffers.put(driver.getName(), currentCost);
-
             if (currentCost > bestCost)
                 bestCost = currentCost;
         }
@@ -111,22 +102,18 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             return;
 
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.REJECT_PROPOSAL),
-                MessageTemplate.MatchConversationId("bring-up"));
-        ACLMessage msg = null;
+                MessageTemplate.MatchConversationId(Consts.BRINGUP_ID));
+        ACLMessage msg;
 
-        while (true) {
-            msg = myAgent.receive(mt);
-            if (msg == null)
-                break;
-
+        while ((msg = myAgent.receive(mt)) != null) {
             if (costsForChauffers.get(msg.getSender().getName()) == null)
                 continue;
 
             ACLMessage newMsg = msg.createReply();
             double newCost = Double.parseDouble(msg.getContent());
-            newCost *= passengerCoefficientNewCost;
+            newCost *= Consts.PASSANGER_COEF_NEW_COST;
 
-            if (newCost > passengerCoefficientLimit * costsForChauffers.get(msg.getSender().getName())) {
+            if (newCost > Consts.PASSANGER_COEF_LIMIT * costsForChauffers.get(msg.getSender().getName())) {
                 newMsg.setContent("Too expensive");
                 newMsg.setPerformative(ACLMessage.REFUSE);
                 removePotentialChauffeur(msg.getSender());
@@ -137,7 +124,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
                 LOG.info(" refuse because this guy - " +
                         msg.getSender().getLocalName() + " too expensive");
 
-                if (potentialChauffeurs.size() == 0) {
+                if (potentialChauffeurs.isEmpty()) {
                     if (waitForConfirm)
                         throw new IllegalStateException("try to become chauffeur while waiting confirm");
 
@@ -154,6 +141,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             }
             driverAgent.send(newMsg);
         }
+
     }
 
 
@@ -162,15 +150,12 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             return;
 
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CFP),
-                MessageTemplate.MatchConversationId("bring-up"));
-        ACLMessage msg = null;
-        double currentCost = 0;
+                MessageTemplate.MatchConversationId(Consts.BRINGUP_ID));
+        ACLMessage msg;
+        double currentCost;
         List<ACLMessage> messages = new LinkedList<>();
 
-        while (true) {
-            msg = myAgent.receive(mt);
-            if (msg == null)
-                break;
+        while ((msg = myAgent.receive(mt)) != null) {
             AID driverAID = msg.getSender();
 
 
@@ -209,14 +194,10 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             return;
 
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.REFUSE),
-                MessageTemplate.MatchConversationId("bring-up"));
-        ACLMessage msg = null;
+                MessageTemplate.MatchConversationId(Consts.BRINGUP_ID));
+        ACLMessage msg;
 
-        while (true) {
-            msg = myAgent.receive(mt);
-            if (msg == null)
-                break;
-
+        while ((msg = myAgent.receive(mt)) != null) {
             driverAgent.removePotentialPassenger(msg.getSender());
         }
     }
@@ -226,12 +207,8 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
                 MessageTemplate.MatchConversationId("i'm chauffeur"));
 
-        ACLMessage msg = null;
-        while (true) {
-            msg = myAgent.receive(mt);
-            if (msg == null)
-                break;
-
+        ACLMessage msg;
+        while ((msg = myAgent.receive(mt)) != null) {
             driverAgent.removePotentialPassenger(msg.getSender());
             LOG.info(" i've got message about new chauffeur - " +
                     msg.getSender().getLocalName());
@@ -244,14 +221,10 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             return;
 
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(
-                ACLMessage.ACCEPT_PROPOSAL), MessageTemplate.MatchConversationId("bring-up"));
+                ACLMessage.ACCEPT_PROPOSAL), MessageTemplate.MatchConversationId(Consts.BRINGUP_ID));
 
-        ACLMessage msg = null;
-        while (true) {
-            msg = myAgent.receive(mt);
-            if (msg == null)
-                break;
-
+        ACLMessage msg;
+        while ((msg = myAgent.receive(mt)) != null) {
             LOG.info(" have handled accept proposal from chauffeur - " +
                     msg.getSender().getLocalName());
             waitForConfirm = true;
@@ -264,6 +237,18 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
         }
     }
 
+    private void sendMessage(String content, int performative, String id, Set<DriverDescription> receivers) {
+        ACLMessage message = new ACLMessage(performative);
+        message.setConversationId(id);
+        for (DriverDescription dd : receivers) {
+            AID reciverAID = dd.getAid();
+            if (reciverAID.equals(driverAgent.getAID())) {
+                message.addReceiver(dd.getAid());
+            }
+        }
+        message.setContent(content);
+        driverAgent.send(message);
+    }
 
     private void handleConfirmFromPotentialChauffeur() {
         if (!waitForConfirm || driverAgent.isChauffeur())
@@ -271,23 +256,20 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
 
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CONFIRM),
-                MessageTemplate.MatchConversationId("bring-up"));
+                MessageTemplate.MatchConversationId(Consts.BRINGUP_ID));
 
-        ACLMessage msg = null;
-        while (true) {
-            msg = myAgent.receive(mt);
-            if (msg == null)
-                break;
-
-            if (!msg.getSender().getName().equals(expectedChauffeur.getName())) {
-                throw new IllegalStateException("confirm from unexpected chauffeur - " + msg.getSender().getLocalName());
+        ACLMessage message;
+        while ((message = myAgent.receive(mt)) != null) {
+            AID senderAID = message.getSender();
+            if (!senderAID.equals(expectedChauffeur)) {
+                throw new IllegalStateException("confirm from unexpected chauffeur - " + senderAID);
             }
 
             ACLMessage newMsg = new ACLMessage(ACLMessage.INFORM);
-            newMsg.setConversationId("i'm gone");
+            newMsg.setConversationId(Consts.IMGONE_ID);
 
             for (DriverDescription dd : driverAgent.getDrivers()) {
-                if (dd.getAid() != msg.getSender() && !dd.getAid().getLocalName().equals(myAgent.getAID().getLocalName())) {
+                if (dd.getAid() != senderAID && !dd.getAid().getLocalName().equals(myAgent.getAID().getLocalName())) {
                     newMsg.addReceiver(dd.getAid());
                     LOG.info(" notificate that i'm gone like passenger " +
                             dd.getAid().getLocalName());
@@ -296,10 +278,11 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
             driverAgent.send(newMsg);
             LOG.info(" gone like passenger(with " +
-                    msg.getSender().getLocalName() + " )");
+                    senderAID.getLocalName() + " )");
             myAgent.doDelete();
             break;
         }
+
     }
 
 
@@ -309,14 +292,10 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
 
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.DISCONFIRM),
-                MessageTemplate.MatchConversationId("bring-up"));
+                MessageTemplate.MatchConversationId(Consts.BRINGUP_ID));
 
-        ACLMessage msg = null;
-        while (true) {
-            msg = myAgent.receive(mt);
-            if (msg == null)
-                break;
-
+        ACLMessage msg;
+        while ((msg = myAgent.receive(mt)) != null) {
             waitForConfirm = false;
             expectedChauffeur = null;
             LOG.info(" i've handled disconfirm from chauffeur " +
@@ -331,14 +310,10 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             return;
 
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                MessageTemplate.MatchConversationId("i'm gone"));
+                MessageTemplate.MatchConversationId(Consts.IMGONE_ID));
 
-        ACLMessage msg = null;
-        while (true) {
-            msg = myAgent.receive(mt);
-            if (msg == null)
-                break;
-
+        ACLMessage msg;
+        while ((msg = myAgent.receive(mt)) != null) {
             LOG.info(" i've(passenger) got msg about leaving " +
                     msg.getSender().getLocalName());
             driverAgent.addGoneDriver(msg.getSender());
