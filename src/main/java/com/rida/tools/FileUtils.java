@@ -1,52 +1,74 @@
 package com.rida.tools;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Created by unrealwork on 09.04.16.
+ * Утилиты для чтения различных структур данных из файла
  */
 public class FileUtils {
-    public static int[][] readPairArray(URL url) {
-        return null;
+
+    private static final Logger LOG = LoggerFactory.getLogger(FileUtils.class);
+
+
+    private FileUtils() {
+
     }
 
+    /**
+     * Считываем целочисленную матрицу из файла
+     *
+     * @param fileUrl -  url файла
+     * @return двумерный массив, модержащий матрицу
+     * @throws IOException
+     */
     public static int[][] readSquareIntegerMatrix(URL fileUrl) throws IOException {
-        int n;
         int[][] matrix;
-
-        File file;
-        if (fileUrl != null) {
-            file = new File(fileUrl.getFile());
-        } else {
-            file = null;
+        List<String> lines = readLines(fileUrl);
+        int i = 0;
+        matrix = new int[lines.size()][];
+        for (String line : lines) {
+            matrix[i] = parseIntArray(line);
+            i++;
         }
+        return matrix;
+    }
 
-        BufferedReader fin = null;
-        if (file != null) {
-            try {
-                fin = new BufferedReader(new FileReader(file));
-                String[] size = fin.readLine().split(" ");
-                n = Integer.parseInt(size[0]);
-                matrix = new int[n][n];
-                for (int i = 0; i < n; i++) {
-                    String[] matr = fin.readLine().split(" ");
-                    for (int j = 0; j < matr.length; j++) {
-                        matrix[i][j] = Integer.parseInt(matr[j]);
-                    }
-                }
-                return matrix;
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (fin != null) {
-                    fin.close();
-                }
+    private static List<String> readLines(URL fileUrl) {
+        List<String> lines = null;
+        BufferedReader bufferedReader;
+        try {
+            File file = new File(fileUrl.getFile());
+            FileReader fileReader = new FileReader(file);
+            bufferedReader = new BufferedReader(fileReader);
+            lines = new ArrayList<>();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                lines.add(line);
             }
+            fileReader.close();
+        } catch (IOException e) {
+            LOG.error("Failed to read data from file caused : ", e);
         }
-        return null;
+        return lines;
+    }
+
+    private static int[] parseIntArray(String line) {
+        String[] tokenArray = line.split(" ");
+        int[] numArray = new int[tokenArray.length];
+        int i = 0;
+        for (String token : tokenArray) {
+            numArray[i] = Integer.parseInt(token);
+            i++;
+        }
+        return numArray;
     }
 }

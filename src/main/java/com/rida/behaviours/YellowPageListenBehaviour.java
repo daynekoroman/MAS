@@ -3,7 +3,8 @@ package com.rida.behaviours;
 import com.rida.agents.DriverAgent;
 import com.rida.tools.DriverDescription;
 import com.rida.tools.Trip;
-import jade.core.behaviours.OneShotBehaviour;
+import jade.core.Agent;
+import jade.core.behaviours.WakerBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.Property;
@@ -12,23 +13,24 @@ import jade.domain.FIPAException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
+import jade.util.leap.Iterator;
+
 
 /**
- * Created by daine on 03.04.2016.
+ * Поведение считывающее информацию с сервиса желтых страниц
  */
-public class YellowPageListenBehaviour extends OneShotBehaviour {
+public class YellowPageListenBehaviour extends WakerBehaviour {
 
     private static final Logger LOG = LoggerFactory.getLogger(YellowPageListenBehaviour.class);
+    private static final long serialVersionUID = -3203854470448955284L;
+
+    public YellowPageListenBehaviour(Agent a, long timeout) {
+        super(a, timeout);
+    }
 
     @Override
-    public void action() {
-        try {
+    public void onWake() {
 
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         DriverAgent driverAgent = (DriverAgent) myAgent;
         DFAgentDescription template = new DFAgentDescription();
         ServiceDescription sd = new ServiceDescription();
@@ -36,47 +38,57 @@ public class YellowPageListenBehaviour extends OneShotBehaviour {
         template.addServices(sd);
 
         try {
-            DFAgentDescription[] YellowPageResults = DFService.search(myAgent, template);
+            DFAgentDescription[] yellowPageResults;
+            yellowPageResults = DFService.search(myAgent, template);
 
-            for (DFAgentDescription result : YellowPageResults) {
-
-                boolean isNotMe = !myAgent.getAID().equals(result.getName());
-                if (isNotMe) {
-                    Iterator<ServiceDescription> iter = result.getAllServices();
-                    while (iter.hasNext()) {
-                        ServiceDescription s = iter.next();
-                        Trip trip = getTrip(s.getAllProperties());
-                        DriverDescription driverDescription = new DriverDescription(s.getName(), result.getName(), trip);
-                        driverAgent.addDriver(driverDescription);
-                        LOG.info("Got Yellow page Service  from {} with trip {}", driverDescription.getName().split("@")[0], driverDescription.getTrip());
-                    }
+            for (DFAgentDescription result : yellowPageResults) {
+                DriverDescription driverDescription = parseDriverDescription(result);
+                if (!driverAgent.getDescription().equals(driverDescription)) {
+                    driverAgent.addDriver(driverDescription);
+                    LOG.info(" Got Yellow page Service from " +
+                            driverDescription.getName() +
+                            " with trip " + driverDescription.getTrip());
                 }
             }
 
-
         } catch (FIPAException e) {
-            e.printStackTrace();
+            LOG.error("Error in FIPA Protocol", e);
         }
 
     }
 
-    private Trip getTrip(Iterator<Property> properties) {
-        int from = 0,to = 0;
+    private DriverDescription parseDriverDescription(DFAgentDescription result) {
+        DriverDescription driverDescription = null;
+
+        Iterator iter = result.getAllServices();
+        while (iter.hasNext()) {
+            ServiceDescription s = (ServiceDescription) iter.next();
+            Iterator properties = s.getAllProperties();
+            Trip trip = parseTrip(properties);
+            driverDescription = new DriverDescription(s.getName(),
+                    result.getName(), trip);
+        }
+        return driverDescription;
+    }
+
+    private Trip parseTrip(Iterator properties) {
+        int from = 0;
+        int to = 0;
         while (properties.hasNext()) {
-            Property property = properties.next();
+            Property property = (Property) properties.next();
             Object o = property.getValue();
             String propertyName = property.getName();
-            switch (propertyName){
+            switch (propertyName) {
                 case "from":
                     from = Integer.parseInt(o.toString());
                     break;
-                case  "to":
+                case "to":
                     to = Integer.parseInt(o.toString());
                     break;
                 default:
                     throw new IllegalArgumentException();
             }
         }
-        return  new Trip(from,to);
+        return new Trip(from, to);
     }
 }

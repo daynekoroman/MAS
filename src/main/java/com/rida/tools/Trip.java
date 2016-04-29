@@ -1,10 +1,13 @@
 package com.rida.tools;
 
+import java.io.Serializable;
+
 /**
- * Класс описывающий поездук
+ * Класс описывающий поездку
  * Created by daine on 03.04.2016.
  */
-public class Trip {
+public class Trip implements Serializable {
+    private static final long serialVersionUID = -6975350472936081045L;
     private double cost;
     private int from;
     private int to;
@@ -15,12 +18,17 @@ public class Trip {
         setTo(to);
     }
 
+    public Trip(Trip trip) {
+        setFrom(trip.getFrom());
+        setTo(trip.getTo());
+        setCost(trip.getCost());
+    }
 
     public double getCost() {
         return cost;
     }
 
-    public void setCost(double cost) {
+    void setCost(double cost) {
         this.cost = cost;
     }
 
@@ -29,7 +37,7 @@ public class Trip {
         return from;
     }
 
-    public void setFrom(int from) {
+    private void setFrom(int from) {
         this.from = from;
     }
 
@@ -37,7 +45,7 @@ public class Trip {
         return to;
     }
 
-    public void setTo(int to) {
+    private void setTo(int to) {
         this.to = to;
     }
 
@@ -45,11 +53,5 @@ public class Trip {
     public String toString() {
         return String.format("From %d To %d by %1.2f€", from, to, cost);
     }
-
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        Trip t =  new Trip(this.from, this.to);
-        t.setCost(this.cost);
-        return t;
-    }
+    
 }
