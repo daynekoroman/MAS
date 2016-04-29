@@ -66,7 +66,7 @@ public class Helper {
 
     private static int nearestVertex(Graph g, int from, Set<Integer> vertices) {
         Integer min = Integer.MAX_VALUE;
-        int currentVertex = -1;
+        int currentVertex = 0;
         for (Integer t : vertices) {
             int shortDistance = g.bfs(from, t);
             if (min > shortDistance) {

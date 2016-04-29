@@ -1,5 +1,6 @@
 package com.rida.agents;
 
+import com.rida.behaviours.StatisticsBehaviour;
 import com.rida.tools.FileUtils;
 import com.rida.tools.Graph;
 import jade.core.Agent;
@@ -27,10 +28,18 @@ public class CreatorAgent extends Agent {
     private static final Logger LOG = LoggerFactory.getLogger(CreatorAgent.class);
     private static final long serialVersionUID = 6383145659245328051L;
     private transient Graph mapGraph = null;
+    private int agentsAmount = 0;
+    private int aloneDistance = 0;
+
+    public int getAgentsAmount() {
+        return agentsAmount;
+    }
+
 
     private Graph getGraphFromFile(String fileName) throws IOException {
         ClassLoader classLoader = getClass().getClassLoader();
         URL fileUrl = classLoader.getResource(fileName);
+        LOG.info("Let's start carpooling!");
         LOG.info("I'm trying to get graph from file: {}", fileUrl);
         int[][] matrix;
         try {
@@ -49,11 +58,13 @@ public class CreatorAgent extends Agent {
         int[][] drivers = FileUtils.readSquareIntegerMatrix(fileUrl);
         int driversCount = drivers.length;
         AgentContainer c = getContainerController();
+        agentsAmount = driversCount;
         for (int i = 0; i < driversCount; i++) {
             Object[] params = new Object[3];
             params[0] = mapGraph;
             params[1] = drivers[i][0];
             params[2] = drivers[i][1];
+            aloneDistance += mapGraph.bfs(drivers[i][0], drivers[i][1]);
             AgentController a = c.createNewAgent(DRIVER_AGENT_BASE_NAME + i, DRIVER_AGENT_CLASS_NAME, params);
             a.start();
         }
@@ -66,14 +77,23 @@ public class CreatorAgent extends Agent {
             mapGraph = getGraphFromFile(GRAPH_DESCRIPTION_FILE);
             LOG.info("I got city graph and now create an Angents");
             createAgentsFromFile();
-            LOG.info("I'm done to create an Agents.");
+
+            LOG.info("I'm done to create an Agents.I'm waiting to collect statistics");
         } catch (IOException e) {
             LOG.error("Failed to get class File", e);
         } catch (StaleProxyException e) {
             LOG.error("Failed create Driver agent caused", e);
-        } finally {
-            doDelete();
         }
-        doDelete();
+        addBehaviour(new StatisticsBehaviour(this, 700));
+    }
+
+    @Override
+    protected void takeDown() {
+        super.takeDown();
+        LOG.info("Creator finished work!");
+    }
+
+    public int getAloneDistance() {
+        return aloneDistance;
     }
 }

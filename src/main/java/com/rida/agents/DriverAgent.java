@@ -1,6 +1,9 @@
 package com.rida.agents;
 
-import com.rida.behaviours.*;
+import com.rida.behaviours.RegisterYellowPagesBehaviour;
+import com.rida.behaviours.ServerChauffeurBehaviour;
+import com.rida.behaviours.ServerPassengerBehaviour;
+import com.rida.behaviours.YellowPageListenBehaviour;
 import com.rida.tools.DriverDescription;
 import com.rida.tools.Graph;
 import com.rida.tools.Helper;
@@ -44,7 +47,6 @@ public class DriverAgent extends Agent {
     }
 
 
-
     @Override
     protected void setup() {
         super.setup();
@@ -59,6 +61,11 @@ public class DriverAgent extends Agent {
         drivers = new HashSet<>();
         potentialDrivers = new HashSet<>();
         goneDrivers = new HashSet<>();
+        setupBehaviour();
+
+    }
+
+    private void setupBehaviour() {
         SequentialBehaviour sequentialBehaviour = new SequentialBehaviour();
         sequentialBehaviour.addSubBehaviour(new RegisterYellowPagesBehaviour());
         sequentialBehaviour.addSubBehaviour(new YellowPageListenBehaviour(this, 1000));
@@ -188,6 +195,21 @@ public class DriverAgent extends Agent {
         return potentialPassengers;
     }
 
+    public DriverDescription getPotentionalPassngerByAID(AID aid) {
+        DriverDescription result = null;
+        for (DriverDescription dd : drivers) {
+            if (dd.getAid().equals(aid)) {
+                result = dd;
+            }
+        }
+        return result;
+    }
+
+    @Override
+    protected void takeDown() {
+        super.takeDown();
+        LOG.info("I'm finishhed work!");
+    }
 
     public Set<DriverDescription> getSetPotentialPassengers() {
         return new HashSet<>(potentialPassengers);

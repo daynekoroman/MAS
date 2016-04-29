@@ -1,6 +1,7 @@
 package com.rida.behaviours;
 
 import com.rida.agents.DriverAgent;
+import com.rida.tools.Consts;
 import com.rida.tools.DriverDescription;
 import com.rida.tools.Trip;
 import jade.core.Agent;
@@ -34,7 +35,7 @@ public class YellowPageListenBehaviour extends WakerBehaviour {
         DriverAgent driverAgent = (DriverAgent) myAgent;
         DFAgentDescription template = new DFAgentDescription();
         ServiceDescription sd = new ServiceDescription();
-        sd.setType("bring-up");
+        sd.setType(Consts.BRINGUP_ID);
         template.addServices(sd);
 
         try {

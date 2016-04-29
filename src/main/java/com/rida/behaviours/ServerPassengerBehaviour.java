@@ -6,6 +6,11 @@ import com.rida.tools.DriverDescription;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.Property;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.slf4j.Logger;
@@ -239,6 +244,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
                     newMsg.addReceiver(dd.getAid());
                     LOG.info(" notificate that i'm gone like passenger " +
                             dd.getAid().getLocalName());
+                    sendPassengerStatistic();
                 }
             }
 
@@ -343,6 +349,21 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
                     senderAID.getLocalName());
         }
         driverAgent.send(newMsg);
+    }
+
+    private void sendPassengerStatistic() {
+        DFAgentDescription dfd = new DFAgentDescription();
+        dfd.setName(driverAgent.getAID());
+        ServiceDescription sd = new ServiceDescription();
+        sd.setType(Consts.STATISTICS_ID);
+        sd.setName(driverAgent.getName());
+        sd.addProperties(new Property("type", "passenger"));
+        dfd.addServices(sd);
+        try {
+            DFService.modify(driverAgent, dfd);
+        } catch (FIPAException fe) {
+            LOG.error("Failed to register agent in Yellow Pages Service caused {}\n", fe);
+        }
     }
 
     @Override

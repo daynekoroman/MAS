@@ -1,17 +1,26 @@
 package com.rida.behaviours;
 
 import com.rida.agents.DriverAgent;
-import com.rida.tools.*;
-
+import com.rida.tools.Consts;
+import com.rida.tools.DriverDescription;
+import com.rida.tools.Helper;
+import com.rida.tools.SubsetGenerator;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.Property;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class ServerChauffeurBehaviour extends TickerBehaviour {
@@ -220,8 +229,30 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
             }
         }
         driverAgent.send(msgInfo);
+        sendChaufferStatistic();
+        LOG.info("I public statistic about my ride in Yellow Pages");
     }
 
+    private void sendChaufferStatistic() {
+        Set<DriverDescription> passangers = new HashSet<>();
+        for (AID aid : passengersForConfirm) {
+            passangers.add(driverAgent.getPotentionalPassngerByAID(aid));
+        }
+        DFAgentDescription dfd = new DFAgentDescription();
+        dfd.setName(driverAgent.getAID());
+        ServiceDescription sd = new ServiceDescription();
+        sd.setType(Consts.STATISTICS_ID);
+        sd.setName(driverAgent.getName());
+        sd.addProperties(new Property("type", "chauffer"));
+        sd.addProperties(new Property("way-length", Helper.calcBestSetProfit(passangers, driverAgent
+                .getMapGraph(), driverAgent.getDescription().getTrip())));
+        dfd.addServices(sd);
+        try {
+            DFService.modify(driverAgent, dfd);
+        } catch (FIPAException fe) {
+            LOG.error("Failed to register agent in Yellow Pages Service caused {}\n", fe);
+        }
+    }
 
     @Override
     public void onTick() {
