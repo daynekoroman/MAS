@@ -78,6 +78,8 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
         checkAndRemovePotentialPassengers();
         if (driverAgent.getSetPotentialPassengers().isEmpty()) {
             goneAndInformAll();
+            passengersForConfirm.clear();
+            sendChaufferStatistic();
             driverAgent.doDelete();
             return;
         }
@@ -121,9 +123,9 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
                 if (failForAgree) {
                     failForAgree = false;
                     informAboutDisconfirm();
-                }
-                else {
+                } else {
                     goneAndInformAll();
+                    sendChaufferStatistic();
                     driverAgent.doDelete();
                     return;
                 }
@@ -135,9 +137,9 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
 
     private void handleOtherBadNewsFromPassengers() {
         ACLMessage msg;
-        MessageTemplate mt = MessageTemplate.or(MessageTemplate.MatchPerformative( ACLMessage.REFUSE),
+        MessageTemplate mt = MessageTemplate.or(MessageTemplate.MatchPerformative(ACLMessage.REFUSE),
                 MessageTemplate.or(MessageTemplate.MatchPerformative(ACLMessage.INFORM),
-                                   MessageTemplate.MatchPerformative(ACLMessage.CANCEL)));
+                        MessageTemplate.MatchPerformative(ACLMessage.CANCEL)));
 
         while ((msg = myAgent.receive(mt)) != null) {
             AID senderAID = msg.getSender();
@@ -246,9 +248,9 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
     }
 
     private void sendChaufferStatistic() {
-        Set<DriverDescription> passangers = new HashSet<>();
+        Set<DriverDescription> passengers = new HashSet<>();
         for (AID aid : passengersForConfirm) {
-            passangers.add(driverAgent.getPotentionalPassngerByAID(aid));
+            passengers.add(driverAgent.getPotentionalPassngerByAID(aid));
         }
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(driverAgent.getAID());
@@ -256,8 +258,12 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
         sd.setType(Consts.STATISTICS_ID);
         sd.setName(driverAgent.getName());
         sd.addProperties(new Property("type", "chauffer"));
-        sd.addProperties(new Property("way-length", Helper.calcBestSetProfit(passangers, driverAgent
-                .getMapGraph(), driverAgent.getDescription().getTrip())));
+
+        double res = Helper.calcBestSetProfit(passengers, driverAgent
+                .getMapGraph(), driverAgent.getDescription().getTrip(), true);
+        LOG.info("chauffeur result: {}", res);
+
+        sd.addProperties(new Property("way-length", res));
         dfd.addServices(sd);
         try {
             DFService.modify(driverAgent, dfd);

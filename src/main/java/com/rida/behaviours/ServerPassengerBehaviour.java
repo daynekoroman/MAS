@@ -47,7 +47,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
 
     private boolean containsPotentialChauffeurByAID(AID aid) {
-        for(DriverDescription dd : potentialChauffeurs) {
+        for (DriverDescription dd : potentialChauffeurs) {
             if (dd.getName().equals(aid.getName())) {
                 return true;
             }
@@ -209,8 +209,8 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
         }
 
         if (passengersToAttempt == null && !waitForConfirm && shouldBeChauffeur(driverAgent.getSetPotentialPassengers())) {
-                tryToBecomeChauffeur();
-                LOG.info("i'm trying to become chauffeur");
+            tryToBecomeChauffeur();
+            LOG.info("i'm trying to become chauffeur");
 
         } else {
             for (ACLMessage message : messages) {
@@ -223,7 +223,6 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
         }
 
     }
-
 
 
     private void tryToBecomeChauffeur() {
@@ -244,14 +243,14 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
         ACLMessage newMsg = new ACLMessage(ACLMessage.DISCONFIRM);
         newMsg.setConversationId(Consts.BRINGUP_ID);
-        for(DriverDescription dd : agreedPassengers) {
+        for (DriverDescription dd : agreedPassengers) {
             newMsg.addReceiver(dd.getAid());
             LOG.info(" FAIL! disconfirm to " + dd.getAid().getLocalName());
         }
         driverAgent.send(newMsg);
 
         HashSet<DriverDescription> newSet = new HashSet<>(driverAgent.getSetPotentialPassengers());
-        for(DriverDescription dd : disagreedPassengers) {
+        for (DriverDescription dd : disagreedPassengers) {
             Helper.removeFromCollectionByAID(newSet, dd.getAid());
         }
         passengersToAttempt = null;
@@ -303,8 +302,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             if (failToTryChauffeurFlag) {
                 failToTryChauffeurFlag = false;
                 failTryToBeChauffeur();
-            }
-            else {
+            } else {
 
                 ACLMessage successMSG = new ACLMessage(ACLMessage.CONFIRM);
                 successMSG.setConversationId(Consts.BRINGUP_ID);
@@ -429,9 +427,8 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             for (DriverDescription dd : driverAgent.getDrivers()) {
                 if (dd.getAid() != senderAID && !dd.getAid().getLocalName().equals(myAgent.getAID().getLocalName())) {
                     newMsg.addReceiver(dd.getAid());
-                    LOG.info(" notificate that i'm gone like passenger " +
-                            dd.getAid().getLocalName());
-                    sendPassengerStatistic();
+
+
                     LOG.info(" notificate " + dd.getAid().getLocalName() + " that i've gone like passenger ");
                 }
             }
@@ -502,7 +499,6 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
     }
 
 
-
     private void sendPassengerStatistic() {
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(driverAgent.getAID());
@@ -528,8 +524,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
         if (!sendedRequests) {
             sendRequests();
             return;
-        }
-        else {
+        } else {
             checkBecomeChauffeur();
         }
 
@@ -547,8 +542,10 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
 
         handleInformAboutChauffeur();
-        if (deleted)
+        if (deleted) {
+            sendPassengerStatistic();
             driverAgent.doDelete();
+        }
     }
 
 }

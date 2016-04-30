@@ -50,7 +50,12 @@ public class Helper {
         return bestPassengers;
     }
 
+
     public static double calcBestSetProfit(Set<DriverDescription> cont, Graph g, Trip driverTrip) {
+        return calcBestSetProfit(cont, g, driverTrip, false);
+    }
+
+    public static double calcBestSetProfit(Set<DriverDescription> cont, Graph g, Trip driverTrip, boolean justSum) {
 
         Set<Integer> vert = new HashSet<>();
         for (DriverDescription dd : cont) {
@@ -80,6 +85,9 @@ public class Helper {
             }
         }
         sum += g.bfs(currentVertex, driverTrip.getTo());
+
+        if (justSum)
+            return (double) sum;
 
         double sumCost = 0.0;
         for (DriverDescription dd : cont) {
@@ -136,4 +144,6 @@ public class Helper {
 
         return null;
     }
+
+
 }

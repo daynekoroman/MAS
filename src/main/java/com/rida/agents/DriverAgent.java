@@ -69,10 +69,10 @@ public class DriverAgent extends Agent {
     private void setupBehaviour() {
         SequentialBehaviour sequentialBehaviour = new SequentialBehaviour();
         sequentialBehaviour.addSubBehaviour(new RegisterYellowPagesBehaviour());
-        sequentialBehaviour.addSubBehaviour(new YellowPageListenBehaviour(this, 300));
+        sequentialBehaviour.addSubBehaviour(new YellowPageListenBehaviour(this, 500));
         ParallelBehaviour parallelBehaviour = new ParallelBehaviour();
-        parallelBehaviour.addSubBehaviour(new ServerPassengerBehaviour(this, 500));
-        parallelBehaviour.addSubBehaviour(new ServerChauffeurBehaviour(this, 500));
+        parallelBehaviour.addSubBehaviour(new ServerPassengerBehaviour(this, 1000));
+        parallelBehaviour.addSubBehaviour(new ServerChauffeurBehaviour(this, 1000));
         sequentialBehaviour.addSubBehaviour(parallelBehaviour);
         addBehaviour(sequentialBehaviour);
     }
