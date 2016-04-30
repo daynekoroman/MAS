@@ -77,9 +77,9 @@ public class StatisticsBehaviour extends TickerBehaviour {
 
     private class Statistic {
         private AgentType type;
-        private int wayLength;
+        private double wayLength;
 
-        Statistic(AgentType type, int wayLength) {
+        Statistic(AgentType type, double wayLength) {
             this.type = type;
             this.wayLength = wayLength;
         }
@@ -88,14 +88,14 @@ public class StatisticsBehaviour extends TickerBehaviour {
             return type;
         }
 
-        int getWayLength() {
+        double getWayLength() {
             return wayLength;
         }
     }
 
     private Statistic parseStatistic(Iterator properties) {
         AgentType type = null;
-        int wayLength = 0;
+        double wayLength = 0;
         while (properties.hasNext()) {
             Property property = (Property) properties.next();
             Object o = property.getValue();
@@ -110,7 +110,7 @@ public class StatisticsBehaviour extends TickerBehaviour {
                     }
                     break;
                 case "way-length":
-                    wayLength = Integer.parseInt(o.toString());
+                    wayLength = Double.parseDouble(o.toString());
                     break;
                 default:
                     throw new IllegalArgumentException();

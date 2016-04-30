@@ -7,7 +7,6 @@ import java.util.Set;
 
 /**
  * Класс для генерации подмножеств множества объектов
- *
  * @param <T> - класс Объекта содержащийся в исходном множестве
  */
 public class SubsetGenerator<T> {
@@ -32,6 +31,8 @@ public class SubsetGenerator<T> {
     }
 
 
+
+
     private List<Set<T>> generateSubset(List<T> superSet, int k) {
         List<Set<T>> res = new ArrayList<>();
         generateSubset(superSet, k, 0, new HashSet<>(), res);
@@ -40,8 +41,7 @@ public class SubsetGenerator<T> {
 
     /**
      * Генерирует подмножества не превышающие определенный размер
-     *
-     * @param set       - исходное множество
+     * @param set - исходное множество
      * @param limitSize - ограничивающий размер
      * @return - Множество подмножеств, удовлетворяющее определенным условиям.
      */

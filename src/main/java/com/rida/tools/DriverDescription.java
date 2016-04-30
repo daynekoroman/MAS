@@ -65,6 +65,7 @@ public class DriverDescription implements Comparable<DriverDescription>, Seriali
     }
 
 
+
     @Override
     public int compareTo(DriverDescription o) {
         double cost1 = this.getTrip().getCost();

@@ -1,5 +1,8 @@
 package com.rida.tools;
 
+import com.rida.agents.DriverAgent;
+import jade.core.AID;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -25,7 +28,35 @@ public class Helper {
     }
 
 
-    public static int calcBestSetProfit(Set<DriverDescription> cont, Graph g, Trip driverTrip) {
+    public static Set<DriverDescription> getBestPassengers(DriverAgent driverAgent, Set<DriverDescription> passengers) {
+        Set<DriverDescription> bestPassengers = null;
+        int passengersCount = passengers.size();
+        int limitSize = (passengersCount > 4) ? 4 : passengersCount;
+        Set<Set<DriverDescription>> passengerCombinations = new
+                SubsetGenerator<DriverDescription>().generateSubSets(passengers, limitSize);
+        double maxProfit = Double.NEGATIVE_INFINITY;
+
+        for (Set<DriverDescription> passengerCombination : passengerCombinations) {
+            int size = passengerCombination.size();
+            if (size > 0 && size <= 4) {
+                double profit = Helper.calcBestSetProfit(passengerCombination, driverAgent.getMapGraph(),
+                        driverAgent.getDescription().getTrip());
+                if (maxProfit < profit) {
+                    maxProfit = profit;
+                    bestPassengers = passengerCombination;
+                }
+            }
+        }
+        return bestPassengers;
+    }
+
+
+    public static double calcBestSetProfit(Set<DriverDescription> cont, Graph g, Trip driverTrip) {
+        return calcBestSetProfit(cont, g, driverTrip, false);
+    }
+
+    public static double calcBestSetProfit(Set<DriverDescription> cont, Graph g, Trip driverTrip, boolean justSum) {
+
         Set<Integer> vert = new HashSet<>();
         for (DriverDescription dd : cont) {
             vert.add(dd.getTrip().getFrom());
@@ -55,13 +86,17 @@ public class Helper {
         }
         sum += g.bfs(currentVertex, driverTrip.getTo());
 
-        int maxWay = 0;
-        for (DriverDescription dd : cont) {
-            maxWay += g.bfs(dd.getTrip().getFrom(), dd.getTrip().getTo());
-        }
-        maxWay += g.bfs(driverTrip.getFrom(), driverTrip.getTo());
+        if (justSum)
+            return (double) sum;
 
-        return maxWay - sum;
+        double sumCost = 0.0;
+        for (DriverDescription dd : cont) {
+//            sumCost += g.bfs(dd.getTrip().getFrom(), dd.getTrip().getTo());
+            sumCost += dd.getTrip().getCost();
+        }
+//        sumCost += g.bfs(driverTrip.getFrom(), driverTrip.getTo());
+
+        return sumCost - sum;
     }
 
     private static int nearestVertex(Graph g, int from, Set<Integer> vertices) {
@@ -76,4 +111,39 @@ public class Helper {
         }
         return currentVertex;
     }
+
+
+    public static boolean removeFromCollectionByAID(Set<DriverDescription> set, AID aid) {
+        for (DriverDescription dd : set) {
+            if (dd.getAid().getName().equals(aid.getName())) {
+                set.remove(dd);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    public static boolean containsInCollectionByAID(Set<DriverDescription> set, AID aid) {
+        for (DriverDescription dd : set) {
+            if (dd.getAid().getName().equals(aid.getName())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static DriverDescription getFromCollectionByAID(Set<DriverDescription> set, AID aid) {
+        for (DriverDescription dd : set) {
+            if (dd.getAid().getName().equals(aid.getName())) {
+                return dd;
+            }
+        }
+
+        return null;
+    }
+
+
 }

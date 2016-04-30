@@ -37,6 +37,7 @@ public class DriverAgent extends Agent {
 
     private ArrayList<DriverDescription> potentialPassengers = new ArrayList<>();
     private boolean isChauffeurFlag = false;
+//    public ArrayList<DriverDescription> bestPassangers = new ArrayList<>();
 
     public Set<AID> getGoneDrivers() {
         return goneDrivers;
@@ -68,10 +69,10 @@ public class DriverAgent extends Agent {
     private void setupBehaviour() {
         SequentialBehaviour sequentialBehaviour = new SequentialBehaviour();
         sequentialBehaviour.addSubBehaviour(new RegisterYellowPagesBehaviour());
-        sequentialBehaviour.addSubBehaviour(new YellowPageListenBehaviour(this, 1000));
+        sequentialBehaviour.addSubBehaviour(new YellowPageListenBehaviour(this, 500));
         ParallelBehaviour parallelBehaviour = new ParallelBehaviour();
-        parallelBehaviour.addSubBehaviour(new ServerPassengerBehaviour(this, 700));
-        parallelBehaviour.addSubBehaviour(new ServerChauffeurBehaviour(this, 700));
+        parallelBehaviour.addSubBehaviour(new ServerPassengerBehaviour(this, 1000));
+        parallelBehaviour.addSubBehaviour(new ServerChauffeurBehaviour(this, 1000));
         sequentialBehaviour.addSubBehaviour(parallelBehaviour);
         addBehaviour(sequentialBehaviour);
     }
@@ -88,15 +89,14 @@ public class DriverAgent extends Agent {
     public Set<DriverDescription> getGoodTrips() {
         Set<DriverDescription> set = new HashSet<>();
         Trip agentTrip = description.getTrip();
-        Random rand = new Random();
 
         for (DriverDescription driver : drivers) {
             Trip otherDriverTrip = driver.getTrip();
             int profit = Helper.calcProfit(otherDriverTrip, agentTrip, mapGraph);
             int reverseProfit = Helper.calcProfit(agentTrip, otherDriverTrip, mapGraph);
             if (profit > 0 && reverseProfit <= profit) {
-                double x = (double) profit * 0.00001 * (rand.nextInt() % 200 - 100);
-                driver.setCost(x + profit);
+//                double x = (double) profit * 0.00001 * (rand.nextInt() % 200 - 100);
+//                driver.setCost(x + profit);
                 set.add(driver);
                 potentialDrivers.add(driver);
             }
@@ -104,13 +104,16 @@ public class DriverAgent extends Agent {
         return set;
     }
 
+
     public DriverDescription getDescription() {
         return description;
     }
 
+
     public Graph getMapGraph() {
         return mapGraph;
     }
+
 
     private boolean havePotentialPassenger(AID aid) {
         for (DriverDescription dd : potentialPassengers) {
@@ -173,21 +176,6 @@ public class DriverAgent extends Agent {
 
     public void becomeChauffeur() {
         isChauffeurFlag = true;
-    }
-
-
-    public void sortPotentialPassengersByCost() {
-        Collections.sort(potentialPassengers);
-    }
-
-
-    public double getSumCostPotentialPassenger() {
-        double sum = 0.0;
-        for (int i = 0; i < CAR_CAPACITY && i < potentialPassengers.size(); i++) {
-            sum += potentialPassengers.get(i).getTrip().getCost();
-        }
-
-        return sum;
     }
 
 
