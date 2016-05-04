@@ -175,6 +175,8 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
                                 " sender: " + msg.getSender().getLocalName());
                     break;
                 }
+                default:
+                    throw new IllegalStateException();
             }
 
             String info = myAgent.getLocalName() + " my potential passengers after removing:\n";
@@ -239,7 +241,7 @@ public class ServerChauffeurBehaviour extends TickerBehaviour {
             AID currentAID = dd.getAid();
             if (!passengersForConfirm.contains(currentAID) && !currentAID.equals(myAgent.getAID())) {
                 msgInfo.addReceiver(currentAID);
-                LOG.info(" i(chauffeur) notificate that i gone " + currentAID.getLocalName());
+//                LOG.info(" i(chauffeur) notificate that i gone " + currentAID.getLocalName());
             }
         }
         driverAgent.send(msgInfo);

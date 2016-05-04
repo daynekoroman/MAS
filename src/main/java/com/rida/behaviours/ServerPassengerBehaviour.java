@@ -37,6 +37,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
     private Set<DriverDescription> passengersToAttempt = null;
     private Set<DriverDescription> agreedPassengers = null;
     private Set<DriverDescription> disagreedPassengers = null;
+    private Set<AID> badPassengers = new HashSet<>();
     private boolean deleted = false;
     private boolean failToTryChauffeurFlag = false;
 
@@ -61,9 +62,9 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
         driverAgent.becomeChauffeur();
         LOG.info("chauffeur now!");
         sendMessage(null, ACLMessage.INFORM, Consts.IMCHAUFFER_ID, potentialChauffeurs);
-        LOG.info(" inform about new chauffeur other potential chauffeurs");
+//        LOG.info(" inform about new chauffeur other potential chauffeurs");
         sendMessage(null, ACLMessage.INFORM, Consts.IMCHAUFFER_ID, driverAgent.getSetPotentialPassengers());
-        LOG.info("inform about new chauffeur gother potential passengers");
+//        LOG.info("inform about new chauffeur gother potential passengers");
         potentialChauffeurs.clear();
         if (waitForConfirm)
             throw new IllegalStateException("WHAAAAAAAAAAT!!");
@@ -83,6 +84,12 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
 
     private boolean shouldBeChauffeur(Set<DriverDescription> currentPassengers) {
+//        HashSet<DriverDescription> currentPassengers = new HashSet<>();
+//        for(DriverDescription dd : _currentPassengers) {
+//            if (!badPassengers.contains(dd.getAid())) {
+//                currentPassengers.add(dd);
+//            }
+//        }
 
         Set<DriverDescription> passengers = Helper.getBestPassengers(driverAgent, currentPassengers);
         if (passengers == null || passengers.isEmpty())
@@ -191,7 +198,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
 
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchPerformative(ACLMessage.CFP),
                 MessageTemplate.MatchConversationId(Consts.BRINGUP_ID));
-        ACLMessage msg;
+        ACLMessage msg = null;
         double currentCost;
         List<ACLMessage> messages = new LinkedList<>();
 
@@ -208,7 +215,8 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             }
         }
 
-        if (passengersToAttempt == null && !waitForConfirm && shouldBeChauffeur(driverAgent.getSetPotentialPassengers())) {
+        if (!messages.isEmpty() && passengersToAttempt == null &&
+                !waitForConfirm && shouldBeChauffeur(driverAgent.getSetPotentialPassengers())) {
             tryToBecomeChauffeur();
             LOG.info("i'm trying to become chauffeur");
 
@@ -276,7 +284,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
                 failToTryChauffeurFlag = true;
                 disagreedPassengers.add(Helper.getFromCollectionByAID(passengersToAttempt, msg.getSender()));
                 Helper.removeFromCollectionByAID(passengersToAttempt, msg.getSender());
-
+//                badPassengers.add(msg.getSender());
             }
 
             if (passengersToAttempt.isEmpty()) {
@@ -317,7 +325,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
                 Set<DriverDescription> allDrivers = driverAgent.getDrivers();
                 for (DriverDescription dd : allDrivers) {
                     if (!Helper.containsInCollectionByAID(agreedPassengers, dd.getAid())) {
-                        LOG.info("gone like chauffeur. Notification for " + dd.getAid().getLocalName());
+//                        LOG.info("gone like chauffeur. Notification for " + dd.getAid().getLocalName());
                         infoMSG.addReceiver(dd.getAid());
                     }
                 }
@@ -429,7 +437,7 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
                     newMsg.addReceiver(dd.getAid());
 
 
-                    LOG.info(" notificate " + dd.getAid().getLocalName() + " that i've gone like passenger ");
+//                    LOG.info(" notificate " + dd.getAid().getLocalName() + " that i've gone like passenger ");
                 }
             }
 

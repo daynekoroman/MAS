@@ -62,7 +62,7 @@ public class FileUtils {
     }
 
     private static int[] parseIntArray(String line) {
-        String[] tokenArray = line.split(" ");
+        String[] tokenArray = line.trim().split(" ");
         int[] numArray = new int[tokenArray.length];
         int i = 0;
         for (String token : tokenArray) {

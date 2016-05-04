@@ -20,7 +20,7 @@ import java.net.URL;
  * А так же считывает матрицу смежности графа, который описывает карту города
  */
 public class CreatorAgent extends Agent {
-    private static final String GRAPH_DESCRIPTION_FILE = "graph.txt";
+    private static final String GRAPH_DESCRIPTION_FILE = "graph1.txt";
     private static final String DRIVERS_DESCRIPTION_FILE = "drivers.txt";
     private static final String DRIVER_AGENT_BASE_NAME = "DriverAgent";
     private static final String DRIVER_AGENT_CLASS_NAME = "com.rida.agents.DriverAgent";

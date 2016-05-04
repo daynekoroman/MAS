@@ -22,10 +22,8 @@ import java.util.*;
  * Created by daine on 03.04.2016.
  */
 public class DriverAgent extends Agent {
-
     private static final Logger LOG = LoggerFactory.getLogger(DriverAgent.class);
     private static final long serialVersionUID = 7075582068677079540L;
-    private static final int CAR_CAPACITY = 4;
 
 
     private transient DriverDescription description = null;
@@ -37,7 +35,6 @@ public class DriverAgent extends Agent {
 
     private ArrayList<DriverDescription> potentialPassengers = new ArrayList<>();
     private boolean isChauffeurFlag = false;
-//    public ArrayList<DriverDescription> bestPassangers = new ArrayList<>();
 
     public Set<AID> getGoneDrivers() {
         return goneDrivers;
@@ -69,10 +66,10 @@ public class DriverAgent extends Agent {
     private void setupBehaviour() {
         SequentialBehaviour sequentialBehaviour = new SequentialBehaviour();
         sequentialBehaviour.addSubBehaviour(new RegisterYellowPagesBehaviour());
-        sequentialBehaviour.addSubBehaviour(new YellowPageListenBehaviour(this, 500));
+        sequentialBehaviour.addSubBehaviour(new YellowPageListenBehaviour(this, 2000));
         ParallelBehaviour parallelBehaviour = new ParallelBehaviour();
-        parallelBehaviour.addSubBehaviour(new ServerPassengerBehaviour(this, 1000));
-        parallelBehaviour.addSubBehaviour(new ServerChauffeurBehaviour(this, 1000));
+        parallelBehaviour.addSubBehaviour(new ServerPassengerBehaviour(this, 3000));
+        parallelBehaviour.addSubBehaviour(new ServerChauffeurBehaviour(this, 3000));
         sequentialBehaviour.addSubBehaviour(parallelBehaviour);
         addBehaviour(sequentialBehaviour);
     }
@@ -95,8 +92,6 @@ public class DriverAgent extends Agent {
             int profit = Helper.calcProfit(otherDriverTrip, agentTrip, mapGraph);
             int reverseProfit = Helper.calcProfit(agentTrip, otherDriverTrip, mapGraph);
             if (profit > 0 && reverseProfit <= profit) {
-//                double x = (double) profit * 0.00001 * (rand.nextInt() % 200 - 100);
-//                driver.setCost(x + profit);
                 set.add(driver);
                 potentialDrivers.add(driver);
             }
