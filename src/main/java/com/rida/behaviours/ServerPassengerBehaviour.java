@@ -492,8 +492,8 @@ public class ServerPassengerBehaviour extends TickerBehaviour {
             removePotentialChauffeur(message.getSender());
 
             if (potentialChauffeurs.isEmpty() && passengersToAttempt == null) {
-                if (waitForConfirm)
-                    throw new IllegalStateException("try to become chauffeur while waiting confirm");
+//                if (waitForConfirm)
+//                    throw new IllegalStateException("try to become chauffeur while waiting confirm");
 
                 becomeChaufferAndInformAll();
                 LOG.info(" chauffeur because all guys leaving");
